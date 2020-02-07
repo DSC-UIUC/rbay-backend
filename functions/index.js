@@ -9,28 +9,31 @@ admin.initializeApp({
 
 var db = admin.firestore(); 
 
+function getProfile(standing, name, res) {
+	
+	var docRef = db.collection(standing).doc(name);
+	var data = {};
+	docRef.get().then(docSnapshot => {
+		if (docSnapshot.exists) {
+			console.log("exists");
+			data[name] = docSnapshot.data();
+			res.status(200).send(data);
+			// console.log(data);
+		} else {
+			data["error"] = name + ' does not exist!';
+			res.status(404).send(data);
+		}
+	});
+	return;
+}
+
 
 exports.student = functions.https.onRequest((req, res) => {
 	var name = req.query.name;
 
 	switch(req.method) {
 		case 'GET':
-			if (name) {
-				var docRef = db.collection("students").doc(name);
-
-				docRef.get().then(docSnapshot => {
-					if (docSnapshot.exists) {
-						// Case where given name exists
-						var data = {};
-						data[name] = docSnapshot.data();
-						res.status(200).send(data);
-					} else {
-						res.status(404).send(name + ' does not exist!');
-					}
-				});
-			} else {
-				res.status(400).send("No query name given");
-			}
+			getProfile("students", name, res);
 			break;
 	}
 	return null;
@@ -43,22 +46,7 @@ exports.professor = functions.https.onRequest((req, res) => {
 
 	switch(req.method) {
 		case 'GET':
-			if (name) {
-				var docRef = db.collection("professors").doc(name);
-
-				docRef.get().then(docSnapshot => {
-					if (docSnapshot.exists) {
-						// Case where given name exists
-						var data = {};
-						data[name] = docSnapshot.data();
-						res.status(200).send(data);
-					} else {
-						res.status(404).send(name + ' does not exist!');
-					}
-				});
-			} else {
-				res.status(400).send("No query name given");
-			}
+			getProfile("professors", name, res);
 			break;
 	}
 	return null;});
