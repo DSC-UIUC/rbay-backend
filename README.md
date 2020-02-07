@@ -3,3 +3,21 @@ You'll be focusing on what the user can't see! This involves working with Fireba
 
 # Development Guidelines
 https://docs.google.com/document/d/1PVu8dfr644QOT0tvP7jJsqVhcjgYlhtRrrXIWbIJWzE/edit?usp=sharing
+
+
+# API Documentation
+
+Once deployed the base url will be https://us-central1-research-bay.cloudfunctions.net.
+
+## Student Profiles
+
+### GET /student
+Gets the profile information of the given student using query string 'name'. Will return json format of the stored profile information if the given student exists.
+Ex. `/student?name=Bob Dylan`
+
+
+## Professor Profiles
+
+### GET /professor
+Gets the profile information of the given professor using query string 'name'. Will return json format of the stored profile information if the given professor exists.
+Ex. `/professor?name=David Hoffman`

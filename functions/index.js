@@ -37,7 +37,7 @@ exports.student = functions.https.onRequest((req, res) => {
 });
 
 
-exports.professors = functions.https.onRequest((req, res) => {
+exports.professor = functions.https.onRequest((req, res) => {
 
 	var name = req.query.name;
 
