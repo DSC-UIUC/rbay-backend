@@ -47,20 +47,36 @@ function verifyJson(standing, json) {
  * @param name 		name of profile
  * @param res 		response of request
  */
-function getProfile(standing, name, res) {
-	
-	var docRef = db.collection(standing).doc(name);
-	var data = {};
+function getProfile(standing, name, res, amount) {
 
-	docRef.get().then(docSnapshot => {
-		if (docSnapshot.exists) {
-			data[name] = docSnapshot.data();
+	if (name) {
+		var docRef = db.collection(standing).doc(name);
+		var data = {};
+
+		docRef.get().then(docSnapshot => {
+			if (docSnapshot.exists) {
+				data[name] = docSnapshot.data();
+				res.status(200).send(data);
+			} else {
+				data["error"] = name + ' does not exist!';
+				res.status(404).send(data);
+			}
+		}).catch(err => {
+			res.status(400).send({ "error" : err });
+		});
+	} else {
+		var amount = amount ? amount : 5;
+		var data = {}
+		var docRef = db.collection(standing).limit(amount);
+		docRef.get().then(docsSnapshot => {
+			docsSnapshot.forEach(doc => {
+				data[doc.id] = doc.data();
+			});
 			res.status(200).send(data);
-		} else {
-			data["error"] = name + ' does not exist!';
-			res.status(404).send(data);
-		}
-	});
+		}).catch(err => {
+			res.status(400).send({ "error" : err });
+		});
+	}
 	return;
 }
 
@@ -72,18 +88,24 @@ function getProfile(standing, name, res) {
  */
 function createProfile(standing, name, res, payload) {
 
-	var verifiedData = verifyJson(standing, payload);
+	if (!name) {
+		res.status(400).send({ "error" : "Expected name query"});
+		return;
+	}
 
+	var verifiedData = verifyJson(standing, payload);
 	var docRef = db.collection(standing).doc(name);
 
 	docRef.get().then(docSnapshot => {
 		if (!docSnapshot.exists) {
 			docRef.set(payload);
-			res.status(200).send(name + " profile created");
+			res.status(200).send({ "success" : name + " profile created"});
 		} else {
-			res.status(400).send(name + " already exists");
+			res.status(400).send({ "error" : name + " already exists" });
 		}
-	})
+	}).catch(err => {
+		res.status(400).send({ "error" : err });
+	});
 	return;
 }
 
@@ -93,14 +115,22 @@ function createProfile(standing, name, res, payload) {
  * @param res 		response of request
  */
 function deleteProfile(standing, name, res) {
+
+	if (!name) {
+		res.status(400).send({ "error" : "Expected name query"});
+		return;
+	}
+
 	var docRef = db.collection(standing).doc(name);
 	docRef.get().then(docSnapshot => {
 		if (docSnapshot.exists) {
 			docRef.delete();
-			res.status(200).send(name + " deleted succesfully");
+			res.status(200).send({ "success" : name + " deleted succesfully"});
 		} else {
-			res.status(400).send(name + " does not exist");
+			res.status(400).send({ "error" : name + " does not exist" });
 		}
+	}).catch(err => {
+		res.status(400).send({ "error" : err });
 	});
 	return;
 }
@@ -112,28 +142,33 @@ function deleteProfile(standing, name, res) {
  * @param payload 	request body
  */
 function updateProfile(standing, name, res, payload) {
+
+	if (!name) {
+		res.status(400).send({ "error" : "Expected name query"});
+		return;
+	}
+
 	var verifiedData = verifyJson(standing, payload);
 	var docRef = db.collection(standing).doc(name);
 	docRef.get().then(docSnapshot => {
 		if (docSnapshot.exists) {
 			docRef.update(verifiedData);
-			res.status(200).send(name + " updated succesfully");
+			res.status(200).send({ "success" : name + " updated succesfully"});
 		} else {
-			res.status(400).send(name + " does not exist");
+			res.status(400).send({ "error" : name + " does not exist" });
 		}
-	})
+	}).catch(err => {
+		res.status(400).send({ "error" : err });
+	});
 }
 
 exports.student = functions.https.onRequest((req, res) => {
+
 	var name = req.query.name;
 
 	switch(req.method) {
 		case 'GET':
-			if (name) {
-				getProfile(student, name, res);
-			} else {
-				res.status(400).send("Name not given");
-			}
+			getProfile(student, name, res, parseInt(req.query.amount));
 			break;
 		case 'POST':
 			createProfile(student, name, res, req.body);
@@ -155,11 +190,7 @@ exports.professor = functions.https.onRequest((req, res) => {
 
 	switch(req.method) {
 		case 'GET':
-			if (name) {
-				getProfile(professor, name, res);
-			} else {
-				res.status(400).send("Name not given");
-			}		
+			getProfile(professor, name, res, parseInt(req.query.amount));
 			break;
 		case 'POST':
 			createProfile(professor, name, res, req.body);
