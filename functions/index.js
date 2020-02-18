@@ -80,6 +80,8 @@ function getProfile(standing, name, res, amount) {
 	return;
 }
 
+
+
 /**
  * @param standing 	indicates whether profile is student or professor
  * @param name 		name of profile
@@ -205,3 +207,77 @@ exports.professor = functions.https.onRequest((req, res) => {
 	return null;
 });
 
+
+/**
+ * @param doc 		doc reference of profile
+ * @param res 		response of request
+ */
+function getUser(doc, res) {
+
+	var user = doc.data().username;
+	var data = {};
+
+	var ref = doc.data().profile;
+	ref.get().then(docSnapshot => {
+		if (docSnapshot.exists) {
+			data[user] = docSnapshot.data();
+			delete data[user]["user"];
+			res.status(200).send(data);
+		} else {
+			data["error"] = user + ' profile not created';
+			res.status(404).send(data);
+		}
+	}).catch(err => {
+		res.status(400).send({ "error" : err });
+	});
+	return;
+}
+
+/**
+ * @param doc 		doc reference of profile
+ * @param res 		response of request
+ * @param profile 	user info
+ */
+function createUser(doc, res, profile) {
+
+	return;
+}
+
+exports.user = functions.https.onRequest((req, res) => {
+
+	var user = req.query.username;
+
+	// getting id of firestore collection given username
+	var docRef = db.collection("users").where("username", "==", user).limit(1);
+
+
+	docRef.get().then(querySnapshot => {
+		if (!querySnapshot.empty) {
+			querySnapshot.forEach(doc => {
+				switch(req.method) {
+					case 'GET':
+						getUser(doc, res);
+						break;
+					case 'POST':
+						res.status(400).send({ "error" : "User already exists"});
+						break;
+					case 'DELETE':
+						res.send("Not yet implemented");
+						break;
+					case 'PUT':
+						res.send("Not yet implemented");
+						break;
+				}
+			});
+		} else {
+			if (req.method == 'POST') {
+				res.send("Not yet implemented");
+			} else {
+				res.status(404).send({ "error" : "User " + user + " not found"});
+			}
+		}
+	});
+
+
+	return null;
+});
