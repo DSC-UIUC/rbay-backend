@@ -234,12 +234,45 @@ function getUser(doc, res) {
 }
 
 /**
- * @param doc 		doc reference of profile
  * @param res 		response of request
  * @param profile 	user info
+ * required fields in body should be major, name, skills, year, email, is_student, username
  */
-function createUser(doc, res, profile) {
+function createUser(profile, res) {
+	// creating user document first
+	var userDocRef = db.collection("users").doc();
+	var user_doc = {};
+	user_doc["postings"] = [];
+	user_doc["profile"] = db.collection("profiles").doc(userDocRef.id);
+	if (profile.hasOwnProperty("email")) {
+		user_doc["email"] = profile["email"];
+	}
+	if (profile.hasOwnProperty("username")) {
+		user_doc["username"] = profile["username"];
+	}
+	if (profile.hasOwnProperty("is_student")) {
+		user_doc["is_student"] = profile["is_student"];
+	}
 
+	// creating profile doc
+	var profileDocRef = db.collection("profiles").doc(userDocRef.id);
+	var profile_doc = {};
+	profile_doc["users"] = userDocRef;
+	if (profile.hasOwnProperty("major")) {
+		profile_doc["major"] = profile["major"];
+	}
+	if (profile.hasOwnProperty("skills")) {
+		profile_doc["skills"] = profile["skills"];
+	}
+	if (profile.hasOwnProperty("year")) {
+		profile_doc["year"] = profile["year"];
+	}
+	if (profile.hasOwnProperty("name")) {
+		profile_doc["name"] = profile["name"];
+	}
+
+	userDocRef.set(user_doc);
+	profileDocRef.set(profile_doc);
 	return;
 }
 
@@ -271,6 +304,7 @@ exports.user = functions.https.onRequest((req, res) => {
 			});
 		} else {
 			if (req.method == 'POST') {
+				createUser(req.body, res);
 				res.send("Not yet implemented");
 			} else {
 				res.status(404).send({ "error" : "User " + user + " not found"});
