@@ -221,10 +221,10 @@ function getUser(doc, res) {
 	ref.get().then(docSnapshot => {
 		if (docSnapshot.exists) {
 			data[user] = docSnapshot.data();
-			delete data[user]["user"];
+			delete data[user]["user"]; // removing firestore reference to users collection
 			res.status(200).send(data);
 		} else {
-			data["error"] = user + ' profile not created';
+			data["error"] = user + ' profile document not created';
 			res.status(404).send(data);
 		}
 	}).catch(err => {
@@ -240,47 +240,46 @@ function getUser(doc, res) {
  */
 function createUser(username, json, res) {
 	// creating user document first
-	var userDocRef = db.collection("users").doc();
+	var userDocRef = db.collection("users").doc(); // TODO
+	var id = userDocRef.id; // TODO change to auth user id once it is setup
 	var user_doc = {};
 
 	user_doc["postings"] = [];
-	user_doc["profile"] = db.collection("profiles").doc(userDocRef.id);
+	user_doc["profile"] = db.collection("profiles").doc(id);
 	user_doc["username"] = username;
-	if (json.hasOwnProperty("email")) {
-		user_doc["email"] = json["email"];
-	}
-	if (json.hasOwnProperty("is_student")) {
-		user_doc["is_student"] = json["is_student"];
-	}
+
+	user_doc["email"] = json.hasOwnProperty("email") ? json["email"] : null;
+	user_doc["is_student"] = json.hasOwnProperty("is_student") ? json["is_student"] : null;
+
 	// creating profile doc
-	var profileDocRef = db.collection("profiles").doc(userDocRef.id);
+	var profileDocRef = db.collection("profiles").doc(id);
 	var profile_doc = {};
 	profile_doc["user"] = userDocRef;
-	if (json.hasOwnProperty("major")) {
-		profile_doc["major"] = json["major"];
-	}
-	if (json.hasOwnProperty("skills")) {
-		profile_doc["skills"] = json["skills"];
-	}
-	if (json.hasOwnProperty("year")) {
-		profile_doc["year"] = json["year"];
-	}
-	if (json.hasOwnProperty("name")) {
-		profile_doc["name"] = json["name"];
-	}
+	profile_doc["major"] = json.hasOwnProperty("major") ? json["major"] : null;
+	profile_doc["skills"] = json.hasOwnProperty("skills") ? json["skills"] : [];
+	profile_doc["year"] = json.hasOwnProperty("year") ? json["year"] : null;
+	profile_doc["name"] = json.hasOwnProperty("name") ? json["name"] : "";
 
-	userDocRef.set(user_doc);
-	profileDocRef.set(profile_doc);
+	userDocRef.set(user_doc).catch( err => {
+		res.status(400).send({ "error" : err});
+		return;
+	});
+	profileDocRef.set(profile_doc).catch( err => {
+		res.status(400).send({ "error" : err});
+		userDocRef.delete(); // Deleting user document because profile doc was not created
+		return;
+	});
 
 	res.status(200).send({ "success" : username + " created succesfully"});
-	return;
 }
 
 function updateUser(doc, json, res) {
 	var verifiedJson = verifyUserJson(json);
 
-	doc.update(verifiedJson);
-
+	doc.update(verifiedJson).catch( err => {
+		res.status(400).send({ "error" : err});
+		return;
+	});
 	res.status(200).send({ "success" : "User updated succesfully"});
 }
 
@@ -291,8 +290,15 @@ function updateUser(doc, json, res) {
  */
 function deleteUser(doc, res) {
 	var profileDocRef = doc.data().profile;
-	profileDocRef.delete();
-	doc.ref.delete();
+	profileDocRef.delete().catch( err => {
+		res.status(200).send({ "error" : "User delete unsuccessful"});
+		return;
+	});
+	doc.ref.delete().catch( err => {
+		res.status(200).send({ "error" : "User deleted unsuccessful"});
+		// TODO add back the profile document
+		return;
+	});
 	res.status(200).send({ "success" : "User deleted succesfully"});
 	return;
 }

@@ -9,7 +9,55 @@ https://docs.google.com/document/d/1PVu8dfr644QOT0tvP7jJsqVhcjgYlhtRrrXIWbIJWzE/
 
 Once deployed the base url will be https://us-central1-research-bay.cloudfunctions.net.
 
-## Student Profiles
+## USERS
+
+### GET /user
+Gets the profile information of a given username using query string 'username'. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
+Ex. '/user?username=test2'
+Example JSON Return Format:
+```
+{
+    "username": {
+        "name": "[string]",
+        "year": [int],
+        "major": "[string]",
+        "skills": [
+            "[string]"
+        ]
+    }
+}
+```
+
+### POST /user
+Creates the profile information that is given through the http request. Use the query string 'username' to indicate the username of profile. Only parameters "email", "is_student", "major", "skills", "year", and "name" are added to the profile. If any of the following parameters are missing, they will be set to null in the database. "posting" will be set to an empty array.
+Ex. `/user?username=test2`
+Example JSON body:
+```
+{
+	"major" : "CS",
+	"email" : "test2@illinois.edu",
+	"name"  : "test2",
+	"year"  : 1,
+	"is_student" : true,
+	"skills" : ["Coding", "Python"]
+}
+```
+
+### PUT /user
+Updates a profile given a query string 'username' and a json body. Only the parameters "major", "skills", "year", "name" will be updated. Any other parameters will be ignored.
+Ex. `/user?username=test`
+Exmaple JSON body:
+```
+{
+	"major" : "CS",
+	"skills" : ["Coding", "Python", "Java"]
+}
+```
+
+### DELETE /user
+Deletes a profile given the query string 'username'.
+
+## Student Profiles (old database)
 
 ### GET /student
 Gets the profile information of the given student using query string 'name'. Will return json format of the stored profile information if the given student exists.
@@ -24,7 +72,7 @@ Updates a profile given a query string 'name' and a json. Only the parameters "G
 ### DELETE /student
 Deletes a profile given the query string 'name'.
 
-## Professor Profiles
+## Professor Profiles (old database)
 
 ### GET /professor
 Gets the profile information of the given professor using query string 'name'. Will return json format of the stored profile information if the given professor exists.
