@@ -235,46 +235,81 @@ function getUser(doc, res) {
 
 /**
  * @param res 		response of request
- * @param profile 	user info
+ * @param json 	user info
  * required fields in body should be major, name, skills, year, email, is_student, username
  */
-function createUser(profile, res) {
+function createUser(username, json, res) {
 	// creating user document first
 	var userDocRef = db.collection("users").doc();
 	var user_doc = {};
+
 	user_doc["postings"] = [];
 	user_doc["profile"] = db.collection("profiles").doc(userDocRef.id);
-	if (profile.hasOwnProperty("email")) {
-		user_doc["email"] = profile["email"];
+	user_doc["username"] = username;
+	if (json.hasOwnProperty("email")) {
+		user_doc["email"] = json["email"];
 	}
-	if (profile.hasOwnProperty("username")) {
-		user_doc["username"] = profile["username"];
+	if (json.hasOwnProperty("is_student")) {
+		user_doc["is_student"] = json["is_student"];
 	}
-	if (profile.hasOwnProperty("is_student")) {
-		user_doc["is_student"] = profile["is_student"];
-	}
-
 	// creating profile doc
 	var profileDocRef = db.collection("profiles").doc(userDocRef.id);
 	var profile_doc = {};
-	profile_doc["users"] = userDocRef;
-	if (profile.hasOwnProperty("major")) {
-		profile_doc["major"] = profile["major"];
+	profile_doc["user"] = userDocRef;
+	if (json.hasOwnProperty("major")) {
+		profile_doc["major"] = json["major"];
 	}
-	if (profile.hasOwnProperty("skills")) {
-		profile_doc["skills"] = profile["skills"];
+	if (json.hasOwnProperty("skills")) {
+		profile_doc["skills"] = json["skills"];
 	}
-	if (profile.hasOwnProperty("year")) {
-		profile_doc["year"] = profile["year"];
+	if (json.hasOwnProperty("year")) {
+		profile_doc["year"] = json["year"];
 	}
-	if (profile.hasOwnProperty("name")) {
-		profile_doc["name"] = profile["name"];
+	if (json.hasOwnProperty("name")) {
+		profile_doc["name"] = json["name"];
 	}
 
 	userDocRef.set(user_doc);
 	profileDocRef.set(profile_doc);
+
+	res.status(200).send({ "success" : username + " created succesfully"});
 	return;
 }
+
+function updateUser(doc, json, res) {
+	var verifiedJson = verifyUserJson(json);
+
+	doc.update(verifiedJson);
+
+	res.status(200).send({ "success" : "User updated succesfully"});
+}
+
+
+/**
+ * @param doc 		doc reference of profile
+ * @param res 		response of request
+ */
+function deleteUser(doc, res) {
+	var profileDocRef = doc.data().profile;
+	profileDocRef.delete();
+	doc.ref.delete();
+	res.status(200).send({ "success" : "User deleted succesfully"});
+	return;
+}
+
+function verifyUserJson(json) {
+	var valid_fields = ["major", "skills", "year", "name"];
+
+	var verifiedData = {};
+
+	for (var key in json) {
+		if (req_stud_fields.includes(key)) {
+			verifiedData[key] = json[key];
+		}
+	}
+	return verifiedData;
+}
+
 
 exports.user = functions.https.onRequest((req, res) => {
 
@@ -295,17 +330,16 @@ exports.user = functions.https.onRequest((req, res) => {
 						res.status(400).send({ "error" : "User already exists"});
 						break;
 					case 'DELETE':
-						res.send("Not yet implemented");
+						deleteUser(doc, res);
 						break;
 					case 'PUT':
-						res.send("Not yet implemented");
+						updateUser(doc, req.body, res);
 						break;
 				}
 			});
 		} else {
 			if (req.method == 'POST') {
-				createUser(req.body, res);
-				res.send("Not yet implemented");
+				createUser(user, req.body, res);
 			} else {
 				res.status(404).send({ "error" : "User " + user + " not found"});
 			}
