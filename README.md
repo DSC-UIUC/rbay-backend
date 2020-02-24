@@ -69,28 +69,198 @@ Ex. `/user?username=test2`
 
 ### GET /student
 Gets the profile information of the given student using query string 'name'. Will return json format of the stored profile information if the given student exists.
+
 Ex. `/student?name=Bob Dylan`
+
+Example JSON return format:
+
+```
+{
+   "Coursework":{
+      "subject" :[
+         "course"
+      ]
+   },
+   "Skills":{
+      "Programming Languages":[
+         "language"
+      ],
+      "Frameworks":[
+         "framework"
+      ]
+   },
+   "Research Interests":{
+      "Research Area" : [
+      		"specific topic"
+      ]
+   },
+   "GPA": [int],
+   "Year": [string],
+   "About Me": [string]
+	
+}
+```
 
 ### POST /student
 Creates the profile information that is given through the http request. Use the query string 'name' to indicate the id of profile. Only parameters "GPA", "Year", "About Me", "Major", "Coursework", "Skills", and "Research Interests" will be added to the profile. Any other parameters will be ignored.
 
+Ex. `/student?name=Bob Dylan`
+
+Example JSON body:
+
+```
+{
+   "Coursework":{
+      "subject" :[
+         "course"
+      ]
+   },
+   "Skills":{
+      "Programming Languages":[
+         "language"
+      ],
+      "Frameworks":[
+         "framework"
+      ]
+   },
+   "Research Interests":{
+      "Research Area" : [
+      		"specific topic"
+      ]
+   },
+   "GPA": [int],
+   "Year": [string],
+   "About Me": [string]
+	
+}
+```
+
 ### PUT /student
 Updates a profile given a query string 'name' and a json. Only the parameters "GPA", "Year", "About Me", "Major", "Coursework", "Skills", and "Research Interests" will be updated. Any other parameters will be ignored.
 
+Ex. `/student?name=Bob Dylan`
+
+Example JSON body:
+
+```
+{
+   "Coursework":{
+      "subject" :[
+         "course"
+      ]
+   },
+   "Skills":{
+      "Programming Languages":[
+         "language"
+      ],
+      "Frameworks":[
+         "framework"
+      ]
+   },
+   "Research Interests":{
+      "Research Area" : [
+      		"specific topic"
+      ]
+   },
+   "GPA": [int],
+   "Year": [string],
+   "About Me": [string]
+	
+}
+```
+
 ### DELETE /student
 Deletes a profile given the query string 'name'.
+
+Ex. `/student?name=Bob Dylan`
 
 ## Professor Profiles (old database)
 
 ### GET /professor
 Gets the profile information of the given professor using query string 'name'. Will return json format of the stored profile information if the given professor exists.
+
 Ex. `/professor?name=David Hoffman`
+
+Example JSON return format:
+
+```
+{
+    "David Hoffman": {
+        "Job Posting 1": {
+            post details
+        },
+        "Email": "dhoffman@gmail.com",
+        "Bio": "I enjoy solving problems in high performance computing, compilers, and love to teach students about systems and programming design.",
+        "Courses Taught": {
+            "Computer Science": [
+                "Software Design",
+                "Data Structures",
+                "Systems"
+            ]
+        },
+        "Research Areas": {
+            "Computer Science": [
+                "Compilers",
+                "Systems",
+                "High Performance Computing",
+                "Programming Design"
+            ]
+        }
+    }
+}
+```
 
 ### POST /professor
 Creates the profile information that is given through the http request. Use the query string 'name' to indicate the id of profile. Only parameters "Bio", "Courses Taught", "Email", and "Research Areas" will be added to the profile. Any other parameters will be ignored.
 
+Ex. `/professor?name=Bob Dylan`
+
+Example JSON body:
+
+```
+{
+   "Courses Taught":{
+      "subject" :[
+         "course"
+      ]
+   },
+   "Research Area":{
+      "area" : [
+      		"specific topic"
+      ]
+   },
+   "Email": [string],
+   "Bio": [string]
+	
+}
+```
+
 ### PUT /professor
 Updates a profile given a query string 'name' and a json. Only the parameters "Bio", "Courses Taught", "Email", and "Research Areas" will be updated. Any other parameters will be ignored.
 
+Ex. `/professor?name=Bob Dylan`
+
+Example JSON body:
+
+```
+{
+   "Courses Taught":{
+      "subject" :[
+         "course"
+      ]
+   },
+   "Research Area":{
+      "area" : [
+      		"specific topic"
+      ]
+   },
+   "Email": [string],
+   "Bio": [string]
+	
+}
+```
+
 ### DELETE /professor
 Deletes a profile given the query string 'name'.
+
+Ex. `/professor?name=Bob Dylan`
