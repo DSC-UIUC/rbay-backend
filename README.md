@@ -13,7 +13,9 @@ Once deployed the base url will be https://us-central1-research-bay.cloudfunctio
 
 ### GET /user
 Gets the profile information of a given username using query string 'username'. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
+
 Ex. '/user?username=test2'
+
 Example JSON Return Format:
 ```
 {
@@ -29,8 +31,10 @@ Example JSON Return Format:
 ```
 
 ### POST /user
-Creates the profile information that is given through the http request. Use the query string 'username' to indicate the username of profile. Only parameters "email", "is_student", "major", "skills", "year", and "name" are added to the profile. If any of the following parameters are missing, they will be set to null in the database. "posting" will be set to an empty array.
+Creates the profile information that is given through the http request. Use the query string 'username' to indicate the username of profile. Only parameters "email", "is_student", "major", "skills", "year", and "name" are added to the profile. If any of the following parameters are missing, they will be set to null in the database. "posting" will be set to an empty array. Will return error if given username already exists or there was error creating new profile.
+
 Ex. `/user?username=test2`
+
 Example JSON body:
 ```
 {
@@ -44,8 +48,10 @@ Example JSON body:
 ```
 
 ### PUT /user
-Updates a profile given a query string 'username' and a json body. Only the parameters "major", "skills", "year", "name" will be updated. Any other parameters will be ignored.
-Ex. `/user?username=test`
+Updates a profile given a query string 'username' and a json body. Only the parameters "major", "skills", "year", "name" will be updated. Any other parameters will be ignored. Will return error if given username does not exist.
+
+Ex. `/user?username=test2`
+
 Exmaple JSON body:
 ```
 {
@@ -55,7 +61,9 @@ Exmaple JSON body:
 ```
 
 ### DELETE /user
-Deletes a profile given the query string 'username'.
+Deletes a profile given the query string 'username'. Will return error if username does not exist.
+
+Ex. `/user?username=test2`
 
 ## Student Profiles (old database)
 
