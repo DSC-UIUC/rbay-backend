@@ -8,14 +8,6 @@ admin.initializeApp({
 });
 
 var db = admin.firestore();
-const professor = "professors";
-const student 	= "students";
-
-// required fields for a profile
-const req_stud_fields = ["GPA", "Year", "About Me", "Major", "Coursework", "Skills", "Research Interests"];
-const req_prof_fields = ["Bio", "Courses Taught", "Email", "Research Areas"];
-
-
 
 /**
  *	REST HTTP Endpoint for CRUD operations on the users/profile documents
@@ -24,6 +16,11 @@ const req_prof_fields = ["Bio", "Courses Taught", "Email", "Research Areas"];
 exports.user = functions.https.onRequest((req, res) => {
 
 	var user = req.query.username;
+
+	if (!user) {
+		res.status(400).status({ "error" : "No username query given"});
+		return;
+	}
 
 	// getting id of firestore collection given username
 	var docRef = db.collection("users").where("username", "==", user).limit(1);
@@ -177,6 +174,9 @@ function deleteUser(doc, res) {
 	return;
 }
 
+/**
+ *	@param json 		json that we want to sanitize
+ */
 function verifyUserJson(json) {
 	var valid_fields = [["major", "string"], ["year", "int"], ["name", "string"]];
 
@@ -186,7 +186,7 @@ function verifyUserJson(json) {
 		if (fields[0] in json && typeof json[fields[0]] == fields[1]) {
 			verifiedData[fields[0]] = json[fields[0]];
 		}
-	})
+	});
 
 	if ("skills" in json && Array.isArray(json["skills"])) {
 		verifiedData["skills"] = json["skills"];
@@ -201,6 +201,64 @@ function verifyUserJson(json) {
 // ----------------------------------------------------------
 // ----------------------------------------------------------
 // ----------------------------------------------------------
+
+const professor = "professors";
+const student 	= "students";
+
+// required fields for a profile
+const req_stud_fields = [["GPA", "int"], ["Year", "string"], ["About Me", "string"]
+						, ["Major", "string"], ["Coursework", "object"], ["Skills", "object"]
+						, ["Research Interests", "object"]];
+const req_prof_fields = [["Bio", "string"], ["Courses Taught", "object"]
+						, ["Email", "string"], ["Research Areas", "object"]];
+/**
+ *	 HTTP Endpoint for student collection 
+ */
+exports.student = functions.https.onRequest((req, res) => {
+
+	var name = req.query.name;
+
+	switch(req.method) {
+		case 'GET':
+			getProfile(student, name, res, parseInt(req.query.amount));
+			break;
+		case 'POST':
+			createProfile(student, name, res, req.body);
+			break;
+		case 'DELETE':
+			deleteProfile(student, name, res);
+			break;
+		case 'PUT':
+			updateProfile(student, name, res, req.body);
+			break;
+	}
+	return null;
+});
+
+/**
+ *	 HTTP Endpoint for professor collection 
+ */
+exports.professor = functions.https.onRequest((req, res) => {
+
+	var name = req.query.name;
+
+	switch(req.method) {
+		case 'GET':
+			getProfile(professor, name, res, parseInt(req.query.amount));
+			break;
+		case 'POST':
+			createProfile(professor, name, res, req.body);
+			break;
+		case 'DELETE':
+			deleteProfile(professor, name, res);
+			break;
+		case 'PUT':
+			updateProfile(professor, name, res, req.body);
+			break;
+	}
+	return null;
+});
+
 
 /**
  *	Removes any unknown elements in the given json
@@ -220,12 +278,15 @@ function verifyJson(standing, json) {
 
 	var verifiedData = {};
 
-	for (var key in json) {
-		if (req_stud_fields.includes(key)) {
-			verifiedData[key] = json[key];
+	req_fields.forEach( fields => {
+		if (fields[0] in json) {
+			if (typeof json[fields[0]] == fields[1]) {
+				verifiedData[fields[0]] = json[fields[0]];
+			}
 		}
-	}
-	return verifiedData
+	});
+
+	return verifiedData;
 }
 
 /**
@@ -289,7 +350,7 @@ function createProfile(standing, name, res, payload) {
 
 	docRef.get().then(docSnapshot => {
 		if (!docSnapshot.exists) {
-			docRef.set(payload);
+			docRef.set(verifiedData);
 			res.status(200).send({ "success" : name + " profile created"});
 		} else {
 			res.status(400).send({ "error" : name + " already exists" });
@@ -355,46 +416,3 @@ function updateProfile(standing, name, res, payload) {
 		res.status(400).send({ "error" : "Server Error" });
 	});
 }
-
-exports.student = functions.https.onRequest((req, res) => {
-
-	var name = req.query.name;
-
-	switch(req.method) {
-		case 'GET':
-			getProfile(student, name, res, parseInt(req.query.amount));
-			break;
-		case 'POST':
-			createProfile(student, name, res, req.body);
-			break;
-		case 'DELETE':
-			deleteProfile(student, name, res);
-			break;
-		case 'PUT':
-			updateProfile(student, name, res, req.body);
-			break;
-	}
-	return null;
-});
-
-
-exports.professor = functions.https.onRequest((req, res) => {
-
-	var name = req.query.name;
-
-	switch(req.method) {
-		case 'GET':
-			getProfile(professor, name, res, parseInt(req.query.amount));
-			break;
-		case 'POST':
-			createProfile(professor, name, res, req.body);
-			break;
-		case 'DELETE':
-			deleteProfile(professor, name, res);
-			break;
-		case 'PUT':
-			updateProfile(professor, name, res, req.body);
-			break;
-	}
-	return null;
-});
