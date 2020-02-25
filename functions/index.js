@@ -357,10 +357,6 @@ exports.signUp = functions.https.onRequest((request, response) => {
             var email = request.body.email;
             var password = request.body.password;
             var name = request.body.name;
-            // users containing profile reference
-            // profile is connected to profiles which is connected to users
-
-            // TODO: make new json object with request.query.email
 
             admin.auth().createUser({
                 email: email,
@@ -390,13 +386,18 @@ exports.signIn = functions.https.onRequest((request, response) => {
                     var docRef = db.collection("users").where("email", "==", email).limit(1);
                     docRef.get().then(querySnapshot => {
                         querySnapshot.forEach(doc => {
-                            //var dict = doc["_fieldsProto"];
-                            //var keys = dict.keys();
-
-                            // var data = {};
-
+                            var dict = doc["_fieldsProto"];
                             
-                            response.status(200).send(doc["_fieldsProto"]);
+                            var keys = Object.keys(dict);
+                            var data = {};
+                            for (index in keys) {
+                                var nameKey = keys[index];
+                                var valueTypeKey = dict[nameKey]["valueType"];
+                                var value = dict[nameKey][valueTypeKey];
+                                data[nameKey] = value;
+                            }
+                            
+                            response.status(200).send(data);
                             // getUser(doc, response);
                         });
                     });
