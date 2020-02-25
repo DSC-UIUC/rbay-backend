@@ -297,6 +297,7 @@ function deleteUser(doc, res) {
     return;
 }
 
+
 function verifyUserJson(json) {
     var valid_fields = ["major", "skills", "year", "name"];
 
@@ -375,6 +376,31 @@ exports.signUp = functions.https.onRequest((request, response) => {
         default:
             response.status(400).send({ 'failure': 'Must be a POST request.' });
     }
-
-
 });
+
+exports.signIn = functions.https.onRequest((request, response) => {
+    var idToken = request.query.token;
+
+    admin.auth().verifyIdToken(idToken)
+        .then(function (decodedToken) {
+            let uid = decodedToken.uid;
+            admin.auth().getUser(uid)
+                .then(function (userRecord) {
+                    email = userRecord.email;
+                    var docRef = db.collection("users").where("email", "==", email).limit(1);
+                    docRef.get().then(querySnapshot => {
+                        querySnapshot.forEach(doc => {
+                            getUser(doc, response);
+                        });
+                    });
+                })
+                .catch(function (error) {
+                    response.status(400).send('Login failed: ' + error);
+                });
+        }).catch(function (error) {
+            response.status(400).send('Login failed: ' + error);
+        });
+   
+    return;
+});
+
