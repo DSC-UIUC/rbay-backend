@@ -356,14 +356,12 @@ exports.signUp = functions.https.onRequest((request, response) => {
         case 'POST':
             var email = request.body.email;
             var password = request.body.password;
-            var name = request.body.name;
 
             admin.auth().createUser({
                 email: email,
                 password: password
             }).then(function (userRecord) {
                 // See the UserRecord reference doc for the contents of userRecord.
-                // console.log('Successfully created new user:', userRecord.uid);
                 createUser(userRecord.uid, request.body, response);
             }).catch(function (error) {
                 response.status(400).send({ 'failure': error });
@@ -375,74 +373,46 @@ exports.signUp = functions.https.onRequest((request, response) => {
 });
 
 exports.signIn = functions.https.onRequest((request, response) => {
-    var idToken = request.query.token;
+    switch (request.method) {
+        case 'GET':
+            var idToken = request.query.token;
 
-    admin.auth().verifyIdToken(idToken)
-        .then(function (decodedToken) {
-            let uid = decodedToken.uid;
-            admin.auth().getUser(uid)
-                .then(function (userRecord) {
-                    email = userRecord.email;
-                    var docRef = db.collection("users").where("email", "==", email).limit(1);
-                    docRef.get().then(querySnapshot => {
-                        querySnapshot.forEach(doc => {
-                            var dict = doc["_fieldsProto"];
-                            
-                            var keys = Object.keys(dict);
-                            var data = {};
-                            for (index in keys) {
-                                var nameKey = keys[index];
-                                var valueTypeKey = dict[nameKey]["valueType"];
-                                var value = dict[nameKey][valueTypeKey];
-                                data[nameKey] = value;
-                            }
-                            
-                            response.status(200).send(data);
-                            // getUser(doc, response);
-                        });
-                    });
-                    /*var user = docRef.data().username;
-                    var data = {};
+            // Verify login token and find user.
+            admin.auth().verifyIdToken(idToken)
+                .then(function (decodedToken) {
+                    let uid = decodedToken.uid;
+                    admin.auth().getUser(uid)
+                        .then(function (userRecord) {
+                            // Lookup user in users database.
+                            email = userRecord.email;
+                            var docRef = db.collection("users").where("email", "==", email).limit(1);
+                            docRef.get().then(querySnapshot => {
+                                querySnapshot.forEach(doc => {
+                                    var dict = doc["_fieldsProto"];
+                                    var keys = Object.keys(dict);
+                                    var data = {};
 
-                    var ref = docRef.data();
-                    ref.get().then(docSnapshot => {
-                        if (docSnapshot.exists) {
-                            data[user] = docSnapshot.data();
-                            delete data[user]["user"];
-                            response.status(200).send(data);
-                        } else {
-                            data["error"] = user + ' profile not created';
-                            response.status(404).send(data);
-                        }
-                    }).catch(err => {
-                        res.status(400).send({ "error": err });
-                    });
-                    /*docRef.get().then(docSnapshot => {
-                        var data = {};
-                        if (docSnapshot.exists) {
-                            data[user] = docSnapshot.data();
-                            delete data[user]["user"];
-                            respose.status(200).send(data);
-                        } else {
-                            data["error"] = user + ' profile not created';
-                            response.status(404).send(data);
-                        }
-                    }).catch(err => {
-                        response.status(400).send({ "error": err });
-                    });*/
-                    //response.status(200).send(docRef.data());
-                    /*docRef.get().then(querySnapshot => {
-                        querySnapshot.forEach(doc => {
-                            getUser(doc, response);
+                                    for (index in keys) {
+                                        var nameKey = keys[index];
+                                        var valueTypeKey = dict[nameKey]["valueType"];
+                                        var value = dict[nameKey][valueTypeKey];
+                                        data[nameKey] = value;
+                                    }
+
+                                    response.status(200).send(data);
+                                });
+                            });
+                        })
+                        .catch(function (error) {
+                            response.status(400).send({ 'failure': error });
                         });
-                    });*/
-                })
-                .catch(function (error) {
-                    response.status(400).send('Login failed: ' + error);
+                }).catch(function (error) {
+                    response.status(400).send({ 'failure': error });
                 });
-        }).catch(function (error) {
-            response.status(400).send('Login failed: ' + error);
-        });
+            break;
+        default:
+            response.status(400).send({ 'failure': 'Must be a GET request.' });
+    }
    
     return;
 });

@@ -9,32 +9,47 @@ https://docs.google.com/document/d/1PVu8dfr644QOT0tvP7jJsqVhcjgYlhtRrrXIWbIJWzE/
 
 Once deployed the base url will be https://us-central1-research-bay.cloudfunctions.net.
 
-## Student Profiles
+## USERS
 
-### GET /student
-Gets the profile information of the given student using query string 'name'. Will return json format of the stored profile information if the given student exists.
-Ex. `/student?name=Bob Dylan`
+### GET /signIn
+Verifies a login token returns the entry in the users database of the user that the token corresponds to.
 
-### POST /student
-Creates the profile information that is given through the http request. Use the query string 'name' to indicate the id of profile. Only parameters "GPA", "Year", "About Me", "Major", "Coursework", "Skills", and "Research Interests" will be added to the profile. Any other parameters will be ignored.
+Ex. '/signIn?token=[token]'
 
-### PUT /student
-Updates a profile given a query string 'name' and a json. Only the parameters "GPA", "Year", "About Me", "Major", "Coursework", "Skills", and "Research Interests" will be updated. Any other parameters will be ignored.
+Example JSON Return Format:
+```
+{
+    "username": [string],
+    "is_student": [boolean],
+    "profile": [string]",
+    "postings": {
+        "values": [string array]
+    },
+    "email": [string]
+}
+```
 
-### DELETE /student
-Deletes a profile given the query string 'name'.
+### POST /signUp
+Creates user, given an email and password.
 
-## Professor Profiles
+Ex. `/user?=test2`
 
-### GET /professor
-Gets the profile information of the given professor using query string 'name'. Will return json format of the stored profile information if the given professor exists.
-Ex. `/professor?name=David Hoffman`
+Example JSON Request Format:
+```
+{
+	"major" : "Computer Science",
+	"email" : "testingemail@illinois.edu",
+	"password": "hunter2",
+	"name"  : "Test User",
+	"year"  : 1,
+	"is_student" : true,
+	"skills" : ["MIPS Assembly", "x86 Assembly"]
+}
+```
 
-### POST /professor
-Creates the profile information that is given through the http request. Use the query string 'name' to indicate the id of profile. Only parameters "Bio", "Courses Taught", "Email", and "Research Areas" will be added to the profile. Any other parameters will be ignored.
-
-### PUT /professor
-Updates a profile given a query string 'name' and a json. Only the parameters "Bio", "Courses Taught", "Email", and "Research Areas" will be updated. Any other parameters will be ignored.
-
-### DELETE /professor
-Deletes a profile given the query string 'name'.
+Example JSON Response Format:
+```
+{
+    "success": "[userID] created succesfully"
+}
+```
