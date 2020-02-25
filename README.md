@@ -32,7 +32,7 @@ Example JSON Return Format:
 ### POST /signUp
 Creates user, given an email and password.
 
-Ex. `/user?=test2`
+Ex. `/signUp`
 
 Example JSON Request Format:
 ```
