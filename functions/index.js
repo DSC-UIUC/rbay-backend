@@ -390,9 +390,51 @@ exports.signIn = functions.https.onRequest((request, response) => {
                     var docRef = db.collection("users").where("email", "==", email).limit(1);
                     docRef.get().then(querySnapshot => {
                         querySnapshot.forEach(doc => {
-                            getUser(doc, response);
+                            //var dict = doc["_fieldsProto"];
+                            //var keys = dict.keys();
+
+                            // var data = {};
+
+                            
+                            response.status(200).send(doc["_fieldsProto"]);
+                            // getUser(doc, response);
                         });
                     });
+                    /*var user = docRef.data().username;
+                    var data = {};
+
+                    var ref = docRef.data();
+                    ref.get().then(docSnapshot => {
+                        if (docSnapshot.exists) {
+                            data[user] = docSnapshot.data();
+                            delete data[user]["user"];
+                            response.status(200).send(data);
+                        } else {
+                            data["error"] = user + ' profile not created';
+                            response.status(404).send(data);
+                        }
+                    }).catch(err => {
+                        res.status(400).send({ "error": err });
+                    });
+                    /*docRef.get().then(docSnapshot => {
+                        var data = {};
+                        if (docSnapshot.exists) {
+                            data[user] = docSnapshot.data();
+                            delete data[user]["user"];
+                            respose.status(200).send(data);
+                        } else {
+                            data["error"] = user + ' profile not created';
+                            response.status(404).send(data);
+                        }
+                    }).catch(err => {
+                        response.status(400).send({ "error": err });
+                    });*/
+                    //response.status(200).send(docRef.data());
+                    /*docRef.get().then(querySnapshot => {
+                        querySnapshot.forEach(doc => {
+                            getUser(doc, response);
+                        });
+                    });*/
                 })
                 .catch(function (error) {
                     response.status(400).send('Login failed: ' + error);
@@ -403,4 +445,3 @@ exports.signIn = functions.https.onRequest((request, response) => {
    
     return;
 });
-
