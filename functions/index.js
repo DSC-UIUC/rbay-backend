@@ -60,7 +60,7 @@ exports.user = functions.https.onRequest((req, res) => {
 	// } 
 
 
-	return;
+	// return;
 });
 
 
