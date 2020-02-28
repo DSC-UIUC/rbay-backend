@@ -15,14 +15,12 @@ var db = admin.firestore();
  */
 exports.user = functions.https.onRequest((req, res) => {
 
-	var user = req.query.username;
+	var queries = req.query;
+	var user = queries.username;
 
-	if (!user) {
-		res.status(400).status({ "error" : "No username query given"});
-		return;
-	}
-
-	// getting id of firestore collection given username
+	// case where request wants one user
+	// if (user) {
+		// getting id of firestore collection given username
 	var docRef = db.collection("users").where("username", "==", user).limit(1);
 
 
@@ -52,9 +50,17 @@ exports.user = functions.https.onRequest((req, res) => {
 			}
 		}
 	});
+	return;
+	// } 
+	// else if (Object.keys(queries).length != 0) {
+	// 	// search for user using queries
+	// 	if (req.method == 'GET') {
+	// 		searchUsers(queries, res);
+	// 	}
+	// } 
 
 
-	return null;
+	return;
 });
 
 
@@ -84,6 +90,50 @@ function getUser(doc, res) {
 	return;
 }
 
+// /**
+//  *	Searches for users given a query
+//  *
+//  *	@param queries 		queries given by the user
+//  * 	@param res 			response of request
+//  * 	allowedQueries = ["year", "skills", "major", "name"];
+//  */
+// function searchUsers(queries, res) {
+
+// 	var matchedDocs = db.collection("profiles");
+
+// 	// getting docs that match queries
+// 	for (var key in queries) {
+// 		if (key == "year") {
+// 			matchedDocs = matchedDocs.where(key, "==", parseInt(queries[key]));
+// 		} else if (key == "skills" && Array.isArray(queries["skills"])) {
+// 			queries["skills"].forEach( skill => {
+// 				matchedDocs = matchedDocs.where(key, "array-contains", skill);
+// 			});
+// 		} else {
+// 			matchedDocs = matchedDocs.where(key, "==", queries[key]);
+// 		}
+// 	}
+
+// 	// constructing response body
+// 	var responseBody = {};
+// 	matchedDocs.get().then(querySnapshot => {
+// 		if (!querySnapshot.empty) {
+// 			querySnapshot.forEach( profileDoc => {
+// 				// getting username field
+// 				var userDocRef = profileDoc.data().user;
+// 				userDocRef.get().then(userDoc => {
+// 					responseBody[userDoc.data().username] = profileDoc.data();
+// 					delete responseBody[userDoc.data().username]["user"]; // removing firestore reference to users collection
+// 					console.log(responseBody);
+// 				}).catch( err => {
+// 					console.log("Error getting user", err);
+// 				});
+// 			});
+// 			res.status(200).send(responseBody);
+// 		}
+// 	});
+// }
+
 /**
  * @param res 		response of request
  * @param json 	user info
@@ -108,8 +158,15 @@ function createUser(username, json, res) {
 	profile_doc["user"] = userDocRef;
 	profile_doc["major"] = json.hasOwnProperty("major") && typeof json["major"] == "string" ? json["major"] : null;
 	profile_doc["skills"] = json.hasOwnProperty("skills") && Array.isArray(json["skills"]) ? json["skills"] : [];
-	profile_doc["year"] = json.hasOwnProperty("year") && typeof json["year"] == "int" ? json["year"] : null;
 	profile_doc["name"] = json.hasOwnProperty("name") && typeof json["name"] == "string" ? json["name"] : "";
+
+	// checking that year is within range
+	if (json.hasOwnProperty("year") && typeof json["year"] == "int" && json["year"] > 0 && json["year"] <= 4) {
+		profile_doc["year"] = json["year"];
+	} else {
+		profile_doc["year"] = null;
+	}
+
 
 	userDocRef.set(user_doc).catch( err => {
 		console.log(err);
@@ -137,13 +194,19 @@ function updateUser(doc, json, res) {
 	var profileDocRef = doc.data().profile;
 	var verifiedData = verifyUserJson(json);
 
-	profileDocRef.update(verifiedData).catch( err => {
-		console.log(err);
-		res.status(400).send({ "error" : "Server Error" });
-		return;
-	});
+	// console.log(verifiedData);
+	if (Object.keys(verifiedData).length != 0) {
 
-	res.status(200).send({ "success" : "User updated succesfully"});
+		profileDocRef.update(verifiedData).catch( err => {
+			console.log(err);
+			res.status(400).send({ "error" : "Server Error" });
+			return;
+		});
+
+		res.status(200).send({ "success" : "User updated succesfully"});
+	} else {
+		res.status(404).send({ "error" : "No valid update parameter given"});
+	}
 }
 
 
@@ -178,7 +241,7 @@ function deleteUser(doc, res) {
  *	@param json 		json that we want to sanitize
  */
 function verifyUserJson(json) {
-	var valid_fields = [["major", "string"], ["year", "int"], ["name", "string"]];
+	var valid_fields = [["major", "string"], ["name", "string"]];
 
 	var verifiedData = {};
 
@@ -192,6 +255,9 @@ function verifyUserJson(json) {
 		verifiedData["skills"] = json["skills"];
 	} 
 
+	if ("year" in json && typeof json["year"] == "int" && json["year"] > 0 && json["year"] <= 4) {
+		verifiedData["year"] = json["year"];
+	}
 	return verifiedData;
 }
 
