@@ -187,7 +187,7 @@ exports.student = functions.https.onRequest((req, res) => {
 
 
 exports.professor = functions.https.onRequest((req, res) => {
-
+    
     var name = req.query.name;
 
     switch (req.method) {
@@ -313,45 +313,13 @@ function verifyUserJson(json) {
 
 
 exports.user = functions.https.onRequest((req, res) => {
-
-    var user = req.query.username;
-
-    // getting id of firestore collection given username
-    var docRef = db.collection("users").where("username", "==", user).limit(1);
-
-
-    docRef.get().then(querySnapshot => {
-        if (!querySnapshot.empty) {
-            querySnapshot.forEach(doc => {
-                switch (req.method) {
-                    case 'GET':
-                        getUser(doc, res);
-                        break;
-                    case 'POST':
-                        res.status(400).send({ "error": "User already exists" });
-                        break;
-                    case 'DELETE':
-                        deleteUser(doc, res);
-                        break;
-                    case 'PUT':
-                        updateUser(doc, req.body, res);
-                        break;
-                }
-            });
-        } else {
-            if (req.method == 'POST') {
-                createUser(user, req.body, res);
-            } else {
-                res.status(404).send({ "error": "User " + user + " not found" });
-            }
-        }
-    });
-
-
-    return null;
+    // token = req.query.token;
+    userCrud(req, res, false);
+    // var user = req.query.username;
 });
 
 exports.signUp = functions.https.onRequest((request, response) => {
+
     switch (request.method) {
         case 'POST':
             var email = request.body.email;
@@ -416,3 +384,58 @@ exports.signIn = functions.https.onRequest((request, response) => {
    
     return;
 });
+
+function userCrud(req, res, dev) {
+    
+    var user = req.query.username;
+
+    // getting id of firestore collection given username
+    var docRef = db.collection("users").where("username", "==", user).limit(1);
+    var token = req.query.token;
+
+    docRef.get().then(querySnapshot => {
+        if (!querySnapshot.empty) {
+            querySnapshot.forEach(doc => {
+                var shouldRetrieveData = true;
+                if (!dev) {
+                    admin.auth().verifyIdToken(token).then(function (decodedToken) {
+                        //res.status(400).doc["_fieldsProto"][user]["stringValue"];
+                        if (decodedToken.uid != doc["_fieldsProto"]["username"]["stringValue"]) {
+                            res.status(400).send({ 'error': "You do not have authorization to access this data." });
+                            shouldRetrieveData = false;
+                        }
+                    }).catch(function (error) {
+                        res.status(400).send({ 'failure': error });
+                    });
+                } else {
+                    // Dev - do nothing (for now).
+                }
+                if (shouldRetrieveData) {
+                    switch (req.method) {
+                        case 'GET':
+                            getUser(doc, res);
+                            break;
+                        case 'POST':
+                            res.status(400).send({ "error": "User already exists" });
+                            break;
+                        case 'DELETE':
+                            deleteUser(doc, res);
+                            break;
+                        case 'PUT':
+                            updateUser(doc, req.body, res);
+                            break;
+                    }
+                }
+            });
+        } else {
+            if (req.method == 'POST') {
+                createUser(user, req.body, res);
+            } else {
+                res.status(404).send({ "error": "User " + user + " not found" });
+            }
+        }
+    });
+
+
+    return null;
+}
