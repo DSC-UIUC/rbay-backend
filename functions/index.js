@@ -9,130 +9,78 @@ admin.initializeApp({
 
 var db = admin.firestore();
 
-/**
- *	REST HTTP Endpoint for CRUD operations on the users/profile documents
- *  Documentation is on Github
- */
-exports.user = functions.https.onRequest((req, res) => {
+// TODO create uid check helper function
 
-	var queries = req.query;
-	var user = queries.username;
+exports.devgetuser = functions.https.onRequest((req, res) => {
 
-	// case where request wants one user
-	// if (user) {
-		// getting id of firestore collection given username
+	// ADD DEV CHECK
+
+	if (req.method != 'GET') {
+		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
+		return;
+	}
+
+	var idToken = req.query.uid; //TODO add uid check
+	var user = req.query.username;
+
 	var docRef = db.collection("users").where("username", "==", user).limit(1);
-
 
 	docRef.get().then(querySnapshot => {
 		if (!querySnapshot.empty) {
 			querySnapshot.forEach(doc => {
-				switch(req.method) {
-					case 'GET':
-						getUser(doc, res);
-						break;
-					case 'POST':
-						res.status(400).send({ "error" : "User already exists"});
-						break;
-					case 'DELETE':
-						deleteUser(doc, res);
-						break;
-					case 'PUT':
-						updateUser(doc, req.body, res);
-						break;
-				}
+				var data = {};
+
+				var ref = doc.data().profile; // getting the reference to profile doc in users doc
+				ref.get().then(docSnapshot => {
+					// getting the profile firebase document 
+					if (docSnapshot.exists) {
+						data[user] = docSnapshot.data();
+						delete data[user]["user"]; // removing firestore reference to users collection
+						res.status(200).send(data);
+					} else {
+						// case where profile collection document not created but user document exists
+						data["error"] = user + ' profile document not created';
+						res.status(404).send(data);
+					}
+				}).catch(err => {
+					// Server error
+					console.log(err);
+					res.status(400).send({ "error" : "Server Error" });
+				});
 			});
 		} else {
-			if (req.method == 'POST') {
-				createUser(user, req.body, res);
-			} else {
-				res.status(404).send({ "error" : "User " + user + " not found"});
-			}
+			// no user of that name found
+			res.status(404).send({ "error" : "User " + user + " not found"});
 		}
 	});
-	return;
-	// } 
-	// else if (Object.keys(queries).length != 0) {
-	// 	// search for user using queries
-	// 	if (req.method == 'GET') {
-	// 		searchUsers(queries, res);
-	// 	}
-	// } 
-
-
-	// return;
 });
 
 
-/**
- * @param doc 		doc reference of profile
- * @param res 		response of request
- */
-function getUser(doc, res) {
+exports.devcreateuser = functions.https.onRequest((req, res) => {
 
-	var user = doc.data().username;
-	var data = {};
+	// ADD DEV CHECK
 
-	var ref = doc.data().profile;
-	ref.get().then(docSnapshot => {
-		if (docSnapshot.exists) {
-			data[user] = docSnapshot.data();
-			delete data[user]["user"]; // removing firestore reference to users collection
-			res.status(200).send(data);
+	if (req.method != 'POST') {
+		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
+		return;
+	}
+
+	var idToken = req.query.uid; //TODO add uid check
+	var user = req.query.username;
+
+	var docRef = db.collection("users").where("username", "==", user).limit(1);
+	// checking if user exists
+	docRef.get().then(querySnapshot => {
+		if (!querySnapshot.empty) {
+			// overwriting existing user not allowed
+			res.status(400).send({ "error" : "User already exists"});
+			return;
 		} else {
-			data["error"] = user + ' profile document not created';
-			res.status(404).send(data);
+			// helper function to create new account and post to firestore
+			createUser(user, req.body, res);
 		}
-	}).catch(err => {
-		console.log(err);
-		res.status(400).send({ "error" : "Server Error" });
 	});
-	return;
-}
-
-// /**
-//  *	Searches for users given a query
-//  *
-//  *	@param queries 		queries given by the user
-//  * 	@param res 			response of request
-//  * 	allowedQueries = ["year", "skills", "major", "name"];
-//  */
-// function searchUsers(queries, res) {
-
-// 	var matchedDocs = db.collection("profiles");
-
-// 	// getting docs that match queries
-// 	for (var key in queries) {
-// 		if (key == "year") {
-// 			matchedDocs = matchedDocs.where(key, "==", parseInt(queries[key]));
-// 		} else if (key == "skills" && Array.isArray(queries["skills"])) {
-// 			queries["skills"].forEach( skill => {
-// 				matchedDocs = matchedDocs.where(key, "array-contains", skill);
-// 			});
-// 		} else {
-// 			matchedDocs = matchedDocs.where(key, "==", queries[key]);
-// 		}
-// 	}
-
-// 	// constructing response body
-// 	var responseBody = {};
-// 	matchedDocs.get().then(querySnapshot => {
-// 		if (!querySnapshot.empty) {
-// 			querySnapshot.forEach( profileDoc => {
-// 				// getting username field
-// 				var userDocRef = profileDoc.data().user;
-// 				userDocRef.get().then(userDoc => {
-// 					responseBody[userDoc.data().username] = profileDoc.data();
-// 					delete responseBody[userDoc.data().username]["user"]; // removing firestore reference to users collection
-// 					console.log(responseBody);
-// 				}).catch( err => {
-// 					console.log("Error getting user", err);
-// 				});
-// 			});
-// 			res.status(200).send(responseBody);
-// 		}
-// 	});
-// }
+});
 
 /**
  * @param res 		response of request
@@ -142,7 +90,7 @@ function getUser(doc, res) {
 function createUser(username, json, res) {
 	// creating user document first
 	var userDocRef = db.collection("users").doc(); // TODO
-	var id = userDocRef.id; // TODO change to auth user id once it is setup
+	var id = userDocRef.id; // TODO change to auth user id once it is setup TODO
 	var user_doc = {};
 
 	user_doc["postings"] = [];
@@ -161,7 +109,7 @@ function createUser(username, json, res) {
 	profile_doc["name"] = json.hasOwnProperty("name") && typeof json["name"] == "string" ? json["name"] : "";
 
 	// checking that year is within range
-	if (json.hasOwnProperty("year") && typeof json["year"] == "int" && json["year"] > 0 && json["year"] <= 4) {
+	if (json.hasOwnProperty("year") && typeof json["year"] == "number" && json["year"] > 0 && json["year"] <= 4) {
 		profile_doc["year"] = json["year"];
 	} else {
 		profile_doc["year"] = null;
@@ -182,6 +130,108 @@ function createUser(username, json, res) {
 
 	res.status(200).send({ "success" : username + " created succesfully"});
 }
+
+
+exports.devdeleteuser = functions.https.onRequest((req, res) => {
+
+	// ADD DEV CHECK
+
+	if (req.method != 'DELETE') {
+		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
+		return;
+	}
+
+	var idToken = req.query.uid; //TODO add uid check
+	var user = req.query.username;
+
+	var docRef = db.collection("users").where("username", "==", user).limit(1);
+	docRef.get().then(querySnapshot => {
+		if (!querySnapshot.empty) {
+			// profile exists
+			querySnapshot.forEach(doc => {
+				var profileDocRef = doc.data().profile; // getting profile collection doc
+				// get the profileDocRef data in case the delete is unsuccessful
+				// avoids just having only one side of the profile deleted
+				profileDocRef.get().then( docSnapshot => {
+					// deleting profile collection doc
+					profileDocRef.delete().catch( err => {
+						console.log(err);
+						res.status(400).send({ "error" : "User delete unsuccessful"});
+						return;
+					});
+					// deleting user collection doc
+					doc.ref.delete().catch( err => {
+						console.log(err);
+						res.status(400).send({ "error" : "User deleted unsuccessful"});
+						profileDocRef.set(docsSnapshot.data()); // adding profile doc back
+						return;
+					});
+				})
+				
+				res.status(200).send({ "success" : "User deleted succesfully"});
+			});
+		} else {
+			// cannot delete nonexistent profile
+			res.status(404).send({ "error" : "User " + user + " not found"});
+		}
+	});
+});
+
+
+exports.devupdateuser = functions.https.onRequest((req, res) => {
+
+	// ADD DEV CHECK
+
+	if (req.method != 'PUT') {
+		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
+		return;
+	}
+
+	var idToken = req.query.uid; //TODO add uid check
+	var user = req.query.username;
+
+	var docRef = db.collection("users").where("username", "==", user).limit(1);
+	docRef.get().then(querySnapshot => {
+		if (!querySnapshot.empty) {
+			querySnapshot.forEach(doc => {
+				updateUser(doc, req.body, res);
+			});
+		} else {
+			// cannot update nonexistent profile
+			res.status(404).send({ "error" : "User " + user + " not found"});
+		}
+	});
+
+});
+
+
+// /**
+//  * @param doc 		doc reference of profile
+//  * @param res 		response of request
+//  */
+// function getUser(doc, res) {
+
+// 	var user = doc.data().username;
+// 	var data = {};
+
+// 	var ref = doc.data().profile;
+// 	ref.get().then(docSnapshot => {
+// 		if (docSnapshot.exists) {
+// 			data[user] = docSnapshot.data();
+// 			delete data[user]["user"]; // removing firestore reference to users collection
+// 			res.status(200).send(data);
+// 		} else {
+// 			data["error"] = user + ' profile document not created';
+// 			res.status(404).send(data);
+// 		}
+// 	}).catch(err => {
+// 		console.log(err);
+// 		res.status(400).send({ "error" : "Server Error" });
+// 	});
+// 	return;
+// }
+
+
 
 
 /**
@@ -210,32 +260,32 @@ function updateUser(doc, json, res) {
 }
 
 
-/**
- * @param doc 		doc reference of profile
- * @param res 		response of request
- */
-function deleteUser(doc, res) {
-	var profileDocRef = doc.data().profile;
+// /**
+//  * @param doc 		doc reference of profile
+//  * @param res 		response of request
+//  */
+// function deleteUser(doc, res) {
+// 	var profileDocRef = doc.data().profile;
 	
-	// get the profileDocRef data in case the delete is unsuccessful
-	// avoids just having one side of the profile deleted
-	profileDocRef.get().then( docSnapshot => {
-		profileDocRef.delete().catch( err => {
-			console.log(err);
-			res.status(400).send({ "error" : "User delete unsuccessful"});
-			return;
-		});
-		doc.ref.delete().catch( err => {
-			console.log(err);
-			res.status(400).send({ "error" : "User deleted unsuccessful"});
-			profileDocRef.set(docsSnapshot.data());
-			return;
-		});
-	})
+// 	// get the profileDocRef data in case the delete is unsuccessful
+// 	// avoids just having one side of the profile deleted
+// 	profileDocRef.get().then( docSnapshot => {
+// 		profileDocRef.delete().catch( err => {
+// 			console.log(err);
+// 			res.status(400).send({ "error" : "User delete unsuccessful"});
+// 			return;
+// 		});
+// 		doc.ref.delete().catch( err => {
+// 			console.log(err);
+// 			res.status(400).send({ "error" : "User deleted unsuccessful"});
+// 			profileDocRef.set(docsSnapshot.data());
+// 			return;
+// 		});
+// 	})
 	
-	res.status(200).send({ "success" : "User deleted succesfully"});
-	return;
-}
+// 	res.status(200).send({ "success" : "User deleted succesfully"});
+// 	return;
+// }
 
 /**
  *	@param json 		json that we want to sanitize
@@ -254,8 +304,7 @@ function verifyUserJson(json) {
 	if ("skills" in json && Array.isArray(json["skills"])) {
 		verifiedData["skills"] = json["skills"];
 	} 
-
-	if ("year" in json && typeof json["year"] == "int" && json["year"] > 0 && json["year"] <= 4) {
+	if ("year" in json && typeof json["year"] == "number" && json["year"] > 0 && json["year"] <= 4) {
 		verifiedData["year"] = json["year"];
 	}
 	return verifiedData;
