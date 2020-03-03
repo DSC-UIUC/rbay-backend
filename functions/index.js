@@ -1,5 +1,10 @@
 const functions = require('firebase-functions');
 
+process.env.NODE_CONFIG_DIR = '../config';
+const config = require('config');
+
+const dev_config = config.get('developerKey');
+
 var admin = require("firebase-admin");
 
 admin.initializeApp({
@@ -313,9 +318,11 @@ function verifyUserJson(json) {
 
 
 exports.user = functions.https.onRequest((req, res) => {
-    // token = req.query.token;
     userCrud(req, res, false);
-    // var user = req.query.username;
+});
+
+exports.user_dev = functions.https.onRequest((req, res) => {
+    userCrud(req, res, true);
 });
 
 exports.signUp = functions.https.onRequest((request, response) => {
@@ -399,10 +406,8 @@ function userCrud(req, res, dev) {
                 // var shouldRetrieveData = true;
                 if (!dev) {
                     admin.auth().verifyIdToken(token).then(function (decodedToken) {
-                        //res.status(400).doc["_fieldsProto"][user]["stringValue"];
                         if (decodedToken.uid != doc["_fieldsProto"]["username"]["stringValue"]) {
                             res.status(400).send({ 'error': "You do not have authorization to access this data." });
-                            // shouldRetrieveData = false;
                         } else {
                             switch (req.method) {
                                 case 'GET':
@@ -417,14 +422,31 @@ function userCrud(req, res, dev) {
                                 case 'PUT':
                                     updateUser(doc, req.body, res);
                                     break;
-                                
                             }
                         }
                     }).catch(function (error) {
                         res.status(400).send({ 'failure': error });
                     });
                 } else {
-                    // Dev - do nothing (for now).
+                    var key = req.query.developerKey;
+                    if (key != dev_config) {
+                        res.status(400).send({ 'error': "Invalid developer credentials." });
+                    } else {
+                        switch (req.method) {
+                            case 'GET':
+                                getUser(doc, res);
+                                break;
+                            case 'POST':
+                                res.status(400).send({ "error": "User already exists" });
+                                break;
+                            case 'DELETE':
+                                deleteUser(doc, res);
+                                break;
+                            case 'PUT':
+                                updateUser(doc, req.body, res);
+                                break;
+                        }
+                    }
                 }
                 
             });
