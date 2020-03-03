@@ -396,13 +396,29 @@ function userCrud(req, res, dev) {
     docRef.get().then(querySnapshot => {
         if (!querySnapshot.empty) {
             querySnapshot.forEach(doc => {
-                var shouldRetrieveData = true;
+                // var shouldRetrieveData = true;
                 if (!dev) {
                     admin.auth().verifyIdToken(token).then(function (decodedToken) {
                         //res.status(400).doc["_fieldsProto"][user]["stringValue"];
                         if (decodedToken.uid != doc["_fieldsProto"]["username"]["stringValue"]) {
                             res.status(400).send({ 'error': "You do not have authorization to access this data." });
-                            shouldRetrieveData = false;
+                            // shouldRetrieveData = false;
+                        } else {
+                            switch (req.method) {
+                                case 'GET':
+                                    getUser(doc, res);
+                                    break;
+                                case 'POST':
+                                    res.status(400).send({ "error": "User already exists" });
+                                    break;
+                                case 'DELETE':
+                                    deleteUser(doc, res);
+                                    break;
+                                case 'PUT':
+                                    updateUser(doc, req.body, res);
+                                    break;
+                                
+                            }
                         }
                     }).catch(function (error) {
                         res.status(400).send({ 'failure': error });
@@ -410,22 +426,7 @@ function userCrud(req, res, dev) {
                 } else {
                     // Dev - do nothing (for now).
                 }
-                if (shouldRetrieveData) {
-                    switch (req.method) {
-                        case 'GET':
-                            getUser(doc, res);
-                            break;
-                        case 'POST':
-                            res.status(400).send({ "error": "User already exists" });
-                            break;
-                        case 'DELETE':
-                            deleteUser(doc, res);
-                            break;
-                        case 'PUT':
-                            updateUser(doc, req.body, res);
-                            break;
-                    }
-                }
+                
             });
         } else {
             if (req.method == 'POST') {
