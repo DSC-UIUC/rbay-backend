@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "researchbay-2fbdf",
-    "rbay": "researchbay-2fbdf"
+    "default": "research-bay",
+    "rbay": "research-bay"
   }
 }
