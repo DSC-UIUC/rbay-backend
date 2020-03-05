@@ -9,14 +9,16 @@ https://docs.google.com/document/d/1PVu8dfr644QOT0tvP7jJsqVhcjgYlhtRrrXIWbIJWzE/
 
 Once deployed the base url will be https://us-central1-research-bay.cloudfunctions.net.
 
-## USERS
+## USERS Client Endpoints
 
-### GET /user
-Gets the profile information of a given username using query string 'username'. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
+Send Requests with the current users idtoken. This only allows the current user to do CRUD operations on their own information based off the given idToken.
 
-Ex. '/user?username=test2'
+### GET /getuser
+Gets the profile information of a given idToken using query string 'token'. Returns a json format of the stored profile information if the given user exists. Will return error if no token is given and if token does not work. The token is what the client receives once they login.
 
-Example JSON Return Format:
+Ex. '/getuser?token=[token]'
+
+Example JSON Return Format: NOTE*** May be changed
 ```
 {
     "username": {
@@ -30,40 +32,118 @@ Example JSON Return Format:
 }
 ```
 
-### POST /user
-Creates the profile information that is given through the http request. Use the query string 'username' to indicate the username of profile. Only parameters "email", "is_student", "major", "skills", "year", and "name" are added to the profile. If any of the following parameters are missing, they will be set to null in the database. "posting" will be set to an empty array. Will return error if given username already exists or there was error creating new profile.
+### POST /createuser
+Creates the profile information that is given through the http request. Use the query string 'token' to indicate the idToken of the current user. Must pass parameters 'is_student', 'email', and 'username'. Will return error if given username already exists or there was error creating new profile.
 
-Ex. `/user?username=test2`
+For professors, set 'is_student' to false, and only the following parameters will be added to the profile: 'name', 'aboutme', 'coursework', 'research'.
+
+For students, set 'is_student' to true, and only following parameters will be added to profile: 'name', 'aboutme', 'coursework', 'gpa', 'major', 'year', 'experience'.
+
+Ex. `/createuser?token=[token]`
 
 Example JSON body:
 ```
 {
+  "username" : "t2",
 	"major" : "CS",
 	"email" : "test2@illinois.edu",
 	"name"  : "test2",
 	"year"  : 1,
 	"is_student" : true,
-	"skills" : ["Coding", "Python"]
+	"experience" : { 
+      "skills" : [
+          Coding", "Python
+          ]
+      }
 }
 ```
 
-### PUT /user
-Updates a profile given a query string 'username' and a json body. Only the parameters "major", "skills", "year", "name" will be updated. Any other parameters will be ignored. Will return error if given username does not exist.
+### PUT /updateuser
+Updates a profile given a query string 'token' and a json body. Same parameters as createuser but you will not be able to edit 'username' and 'is_student' parameters. Will return error if given token is not valid.
 
-Ex. `/user?username=test2`
+Ex. `/updateuser?token=[token]`
 
 Exmaple JSON body:
 ```
 {
 	"major" : "CS",
-	"skills" : ["Coding", "Python", "Java"]
+  "year"  : 2
 }
 ```
 
-### DELETE /user
+### DELETE /deleteuser
+Deletes a profile given the query string 'token'. Will return error if token is not valid.
+
+Ex. `/deleteuser?token=[token]`
+
+## USERS Dev Endpoints
+
+As of right now, dev endpoints have no way of verification.
+
+### GET /devgetuser
+Gets the profile information of a given username using query string 'username'. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
+
+Ex. '/devgetuser?username=test2'
+
+Example JSON Return Format: ***NOTE*** May be changed
+```
+{
+    "username": {
+        "name": "[string]",
+        "year": [int],
+        "major": "[string]",
+        "skills": [
+            "[string]"
+        ]
+    }
+}
+```
+
+### POST /devcreateuser
+Creates the profile information that is given through the http request. Use the query string 'username' to indicate the username of profile. Also requires query string 'uid' to link the profile to a account. You can get the uid from authentication tab on the firebase console. Must pass parameters 'is_student', 'email', and 'username'. Will return error if given username already exists or there was error creating new profile.
+
+For professors, set 'is_student' to false, and only the following parameters will be added to the profile: 'name', 'aboutme', 'coursework', 'research'.
+
+For students, set 'is_student' to true, and only following parameters will be added to profile: 'name', 'aboutme', 'coursework', 'gpa', 'major', 'year', 'experience'.
+
+Ex. `/devcreateuser?username=test2&uid=[userId]`
+
+Example JSON body:
+```
+{
+  "username" : "t2",
+  "major" : "CS",
+  "email" : "test2@illinois.edu",
+  "name"  : "test2",
+  "year"  : 1,
+  "is_student" : true,
+  "experience" : { 
+      "skills" : [
+          Coding", "Python
+          ]
+      }
+}
+```
+
+### PUT /devupdateuser
+Updates a profile given a query string 'username' and a json body. Same parameters as createuser but you will not be able to edit 'username' and 'is_student' parameters. Will return error if given token is not valid.
+
+Ex. `/devupdateuser?username=test2`
+
+Exmaple JSON body:
+```
+{
+  "major" : "CS",
+  "year"  : 3
+}
+```
+
+### DELETE /devdeleteuser
 Deletes a profile given the query string 'username'. Will return error if username does not exist.
 
-Ex. `/user?username=test2`
+Ex. `/devdeleteuser?username=test2`
+
+
 
 ## Student Profiles (old database)
 
