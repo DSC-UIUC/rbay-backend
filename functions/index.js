@@ -7,9 +7,30 @@ const dev_config = config.get('developerKey');
 
 var admin = require("firebase-admin");
 
+const firebase = require('firebase');
+
+var firebaseConfig = config.get('firebaseConfig');
+
+if (firebaseConfig) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
     databaseURL: "https://research-bay.firebaseio.com"
+});
+
+exports.gettoken = functions.https.onRequest((req, res) => {
+    let uid = req.query.id;
+    admin.auth().createCustomToken(uid)
+        .then(function (customToken) {
+            firebase.auth().signInWithCustomToken(customToken).then(function (usuario) {
+                firebase.auth().currentUser.getIdToken().then(function (IdToken) {
+                    res.status(200).send(IdToken);
+                    return;
+                }).catch(err => res.send(err));
+            }).catch(err => res.send(err));
+        }).catch(err => res.send(err));
 });
 
 var db = admin.firestore();
