@@ -20,18 +20,6 @@ admin.initializeApp({
     databaseURL: "https://research-bay.firebaseio.com"
 });
 
-exports.gettoken = functions.https.onRequest((req, res) => {
-    let uid = req.query.id;
-    admin.auth().createCustomToken(uid)
-        .then(function (customToken) {
-            firebase.auth().signInWithCustomToken(customToken).then(function (usuario) {
-                firebase.auth().currentUser.getIdToken().then(function (IdToken) {
-                    res.status(200).send(IdToken);
-                    return;
-                }).catch(err => res.send(err));
-            }).catch(err => res.send(err));
-        }).catch(err => res.send(err));
-});
 
 var db = admin.firestore();
 
@@ -590,9 +578,11 @@ exports.signIn = functions.https.onRequest((request, response) => {
 
                                     for (index in keys) {
                                         var nameKey = keys[index];
-                                        var valueTypeKey = dict[nameKey]["valueType"];
-                                        var value = dict[nameKey][valueTypeKey];
-                                        data[nameKey] = value;
+                                        if (keys[index] != "profile") {
+                                            var valueTypeKey = dict[nameKey]["valueType"];
+                                            var value = dict[nameKey][valueTypeKey];
+                                            data[nameKey] = value;
+                                        }
                                     }
 
                                     response.status(200).send(data);
