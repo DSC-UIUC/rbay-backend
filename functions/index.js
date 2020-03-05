@@ -80,22 +80,22 @@ exports.createuser = functions.https.onRequest((req, res) => {
 		res.status(400).send({ 'error' : 'No token given'});
 	}
 
-		admin.auth().verifyIdToken(idToken)
-		.then(function(decodedToken) {
-    	let uid = decodedToken.uid;
-			var userDocRef = db.collection('users').doc(uid);
+	admin.auth().verifyIdToken(idToken)
+	.then(function(decodedToken) {
+  	let uid = decodedToken.uid;
+		var userDocRef = db.collection('users').doc(uid);
 
-			userDocRef.get().then(userDoc => {
-				if (userDoc.exists) {
-					res.status(400).send({ "error" : `Profile already exists`});
-				} else {
-					createUser(uid, req.body, res);
-				}
-			});
-		}).catch(function(error) {
-	    console.log(error);
-	    res.status(400).send({ 'error' : 'Error Authenticating'});
+		userDocRef.get().then(userDoc => {
+			if (userDoc.exists) {
+				res.status(400).send({ "error" : `Profile already exists`});
+			} else {
+				createUser(uid, req.body, res);
+			}
 		});
+	}).catch(function(error) {
+    console.log(error);
+    res.status(400).send({ 'error' : 'Invalid token'});
+	});
 })
 
 exports.updateuser = functions.https.onRequest((req, res) => {
@@ -124,7 +124,7 @@ exports.updateuser = functions.https.onRequest((req, res) => {
 		});
 	}).catch(function(error) {
     console.log(error);
-    res.status(400).send({ 'error' : 'Error Authenticating'});
+    res.status(400).send({ 'error' : 'Invalid token'});
 	});
 })
 
@@ -154,7 +154,7 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 		});
 	}).catch(function(error) {
     console.log(error);
-    res.status(400).send({ 'error' : 'Error Authenticating'});
+    res.status(400).send({ 'error' : 'Invalid token'});
 	});
 })
 
@@ -183,7 +183,7 @@ exports.devgetuser = functions.https.onRequest((req, res) => {
 			});
 		} else {
 			// no user of that name found
-			res.status(404).send({ "error" : "User " + user + " not found"});
+			res.status(404).send({ "error" : `User ${user} not found`});
 		}
 	});
 });
