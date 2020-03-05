@@ -9,6 +9,51 @@ https://docs.google.com/document/d/1PVu8dfr644QOT0tvP7jJsqVhcjgYlhtRrrXIWbIJWzE/
 
 Once deployed the base url will be https://us-central1-research-bay.cloudfunctions.net.
 
+## USERS
+
+### GET /signIn
+Verifies a login token returns the entry in the users database of the user that the token corresponds to.
+
+Ex. '/signIn?token=[token]'
+
+Example JSON Return Format:
+```
+{
+    "username": [string],
+    "is_student": [boolean],
+    "profile": [string]",
+    "postings": {
+        "values": [string array]
+    },
+    "email": [string]
+}
+```
+
+### POST /signUp
+Creates user, given an email and password.
+
+Ex. `/signUp`
+
+Example JSON Request Format:
+```
+{
+	"major" : "Computer Science",
+	"email" : "testingemail@illinois.edu",
+	"password": "hunter2",
+	"name"  : "Test User",
+	"year"  : 1,
+	"is_student" : true,
+	"skills" : ["MIPS Assembly", "x86 Assembly"]
+}
+```
+
+Example JSON Response Format:
+```
+{
+    "success": "[userID] created succesfully"
+}
+```
+
 ## USERS Client Endpoints
 
 Send Requests with the current users idtoken. This only allows the current user to do CRUD operations on their own information based off the given idToken.
