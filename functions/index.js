@@ -537,25 +537,46 @@ function createUserJson(is_student=null, email=null, username=null, profileRef=n
 //     userCrud(req, res, true);
 // });
 
-exports.signUp = functions.https.onRequest((request, response) => {
+exports.signUp = functions.https.onRequest((req, res) => {
 
-    switch (request.method) {
+    switch (req.method) {
         case 'POST':
-            var email = request.body.email;
-            var password = request.body.password;
+            var email = req.body.email;
+            var password = req.body.password;
+            var username = req.body.username;
+            if (!(req.body.hasOwnProperty(IS_STUDENT) && req.body.hasOwnProperty(EMAIL) && req.body.hasOwnProperty(USERNAME))) {
+                res.status(400).send({ 'error': `Missing required parameter ${IS_STUDENT}, ${EMAIL}, or ${USERNAME}` });
+                return;
+            }
+            // See the UserRecord reference doc for the contents of userRecord.
+            var docRef = db.collection("users").where("username", "==", username).limit(1);
+            // checking if user exists
+            docRef.get().then(querySnapshot => {
+                if (!querySnapshot.empty) {
+                    // overwriting existing user not allowed
+                    res.status(400).send({ "error": `${username} already exists` });
+                    return;
+                }
+            }); 
 
             admin.auth().createUser({
                 email: email,
                 password: password
             }).then(function (userRecord) {
-                // See the UserRecord reference doc for the contents of userRecord.
-                createUser(userRecord.uid, request.body, response);
+                var createUserResponse;
+                createUser(userRecord.uid, req.body, createUserResponse);
+                request.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + api_key + '&email=' + email + '&password=' + password + '&returnSecureToken=true', function (error, response, body) {
+                    var bodyAsJson = JSON.parse(body);
+                    var data = {};
+                    data["token"] = bodyAsJson["idToken"];
+                    res.status(200).send(data);
+                });
             }).catch(function (error) {
-                response.status(400).send({ 'failure': error });
+                res.status(400).send({ 'failure': error });
             });
             break;
         default:
-            response.status(400).send({ 'failure': 'Must be a POST request.' });
+            res.status(400).send({ 'failure': 'Must be a POST request.' });
     }
 });
 
