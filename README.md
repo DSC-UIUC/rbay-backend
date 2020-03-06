@@ -12,25 +12,34 @@ Once deployed the base url will be https://us-central1-research-bay.cloudfunctio
 ## USERS
 
 ### GET /signIn
-Verifies a login token returns the entry in the users database of the user that the token corresponds to.
+Takes in an email and password. Returns token and the user's entry in the users database.
 
-Ex. '/signIn?token=[token]'
+Ex. '/signIn'
+
+Example JSON Request Format:
+```
+{
+	"email" : [string],
+  "password" : [string]
+}
+```
 
 Example JSON Return Format:
 ```
 {
     "username": [string],
     "is_student": [boolean],
-    "profile": [string]",
+    "profile": [string],
     "postings": {
         "values": [string array]
     },
-    "email": [string]
+    "email": [string],
+    "token": [string]
 }
 ```
 
 ### POST /signUp
-Creates user, given an email and password.
+Creates and logs in user, given user information (e.g. email and password).
 
 Ex. `/signUp`
 
@@ -50,7 +59,7 @@ Example JSON Request Format:
 Example JSON Response Format:
 ```
 {
-    "success": "[userID] created succesfully"
+    "token" : [string]
 }
 ```
 
@@ -95,7 +104,7 @@ Example JSON body:
 	"name"  : "test2",
 	"year"  : 1,
 	"is_student" : true,
-	"experience" : { 
+	"experience" : {
       "skills" : [
           Coding", "Python
           ]
@@ -162,7 +171,7 @@ Example JSON body:
   "name"  : "test2",
   "year"  : 1,
   "is_student" : true,
-  "experience" : { 
+  "experience" : {
       "skills" : [
           Coding", "Python
           ]
@@ -222,7 +231,7 @@ Example JSON return format:
    "GPA": [int],
    "Year": [string],
    "About Me": [string]
-	
+
 }
 ```
 
@@ -256,7 +265,7 @@ Example JSON body:
    "GPA": [int],
    "Year": [string],
    "About Me": [string]
-	
+
 }
 ```
 
@@ -290,7 +299,7 @@ Example JSON body:
    "GPA": [int],
    "Year": [string],
    "About Me": [string]
-	
+
 }
 ```
 
@@ -356,7 +365,7 @@ Example JSON body:
    },
    "Email": [string],
    "Bio": [string]
-	
+
 }
 ```
 
@@ -381,7 +390,7 @@ Example JSON body:
    },
    "Email": [string],
    "Bio": [string]
-	
+
 }
 ```
 
