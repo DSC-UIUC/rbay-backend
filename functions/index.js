@@ -1,9 +1,12 @@
 const functions = require('firebase-functions');
+const request = require('request');
 
 process.env.NODE_CONFIG_DIR = '../config';
 const config = require('config');
 
 const dev_config = config.get('developerKey');
+
+const api_key = config.get('apiKey');
 
 var admin = require("firebase-admin");
 
@@ -556,50 +559,45 @@ exports.signUp = functions.https.onRequest((request, response) => {
     }
 });
 
-exports.signIn = functions.https.onRequest((request, response) => {
-    switch (request.method) {
+exports.signIn = functions.https.onRequest((req, res) => {
+    var email = req.body.email;
+    var password = req.body.password;
+
+    switch (req.method) {
         case 'GET':
-            var idToken = request.query.token;
+            request.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + api_key +'&email=' + email + '&password=' + password + '&returnSecureToken=true', function (error, response, body) {
+                if (response.statusCode != 200) {
+                    res.status(400).send({ 'failure': 'Incorrect email or password.' });
+                    return;
+                } else {
+                    var bodyAsJson = JSON.parse(body);
+                    var data = {};
+                    data["token"] = bodyAsJson["idToken"];
+                    email = bodyAsJson["email"];
+                    var docRef = db.collection("users").where("email", "==", email).limit(1);
+                    docRef.get().then(querySnapshot => {
+                        querySnapshot.forEach(doc => {
+                            var dict = doc["_fieldsProto"];
+                            var keys = Object.keys(dict);
 
-            // Verify login token and find user.
-            admin.auth().verifyIdToken(idToken)
-                .then(function (decodedToken) {
-                    let uid = decodedToken.uid;
-                    admin.auth().getUser(uid)
-                        .then(function (userRecord) {
-                            // Lookup user in users database.
-                            email = userRecord.email;
-                            var docRef = db.collection("users").where("email", "==", email).limit(1);
-                            docRef.get().then(querySnapshot => {
-                                querySnapshot.forEach(doc => {
-                                    var dict = doc["_fieldsProto"];
-                                    var keys = Object.keys(dict);
-                                    var data = {};
+                            for (index in keys) {
+                                var nameKey = keys[index];
+                                if (keys[index] != "profile") {
+                                    var valueTypeKey = dict[nameKey]["valueType"];
+                                    var value = dict[nameKey][valueTypeKey];
+                                    data[nameKey] = value;
+                                }
+                            }
 
-                                    for (index in keys) {
-                                        var nameKey = keys[index];
-                                        if (keys[index] != "profile") {
-                                            var valueTypeKey = dict[nameKey]["valueType"];
-                                            var value = dict[nameKey][valueTypeKey];
-                                            data[nameKey] = value;
-                                        }
-                                    }
-
-                                    response.status(200).send(data);
-                                });
-                            });
-                        })
-                        .catch(function (error) {
-                            response.status(400).send({ 'failure': error });
+                            res.status(200).send(data);
                         });
-                }).catch(function (error) {
-                    response.status(400).send({ 'failure': error });
-                });
+                    });
+                }
+            });
             break;
         default:
-            response.status(400).send({ 'failure': 'Must be a GET request.' });
+            res.status(400).send({ 'failure': 'Must be a GET request.' });
     }
-   
     return;
 });
 
