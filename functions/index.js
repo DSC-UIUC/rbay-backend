@@ -1,18 +1,11 @@
 const functions = require('firebase-functions');
 const request = require('request');
-
-process.env.NODE_CONFIG_DIR = '../config';
-const config = require('config');
-
-const dev_config = config.get('developerKey');
-
-const api_key = config.get('apiKey');
-
-var admin = require("firebase-admin");
-
+const admin = require("firebase-admin");
 const firebase = require('firebase');
 
-var firebaseConfig = config.get('firebaseConfig');
+const dev_config = functions.config().developer.key;
+const api_key = functions.config().api.key;
+const firebaseConfig = process.env.FIREBASE_CONFIG;
 
 if (firebaseConfig) {
     firebase.initializeApp(firebaseConfig);
@@ -23,8 +16,7 @@ admin.initializeApp({
     databaseURL: "https://research-bay.firebaseio.com"
 });
 
-
-var db = admin.firestore();
+const db = admin.firestore();
 
 const NAME = 'name';
 const ABOUT_ME = 'aboutme';
@@ -46,19 +38,16 @@ const DEVELOPER_KEY = 'developerKey';
 
 exports.getuser = functions.https.onRequest((req, res) => {
 
-	if (req.method != 'GET') {
-		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-		return;
+	if (req.method !== 'GET') {
+		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
-		res.status(400).send({ 'error' : 'No token given'});
-		return;
+		return res.status(400).send({ 'error' : 'No token given'});
 	}
 
-	admin.auth().verifyIdToken(idToken)
-  .then(function(decodedToken) {
+	admin.auth().verifyIdToken(idToken).then(decodedToken => {
   	// case where token is valid
     let uid = decodedToken.uid;
     var userDocRef = db.collection('users').doc(uid); // once authentication is combined, each doc id should be uid
@@ -76,32 +65,38 @@ exports.getuser = functions.https.onRequest((req, res) => {
     			} else {
     				res.status(404).send({ 'error' : `Profile Document nonexistent for ${user}`})
     			}
+    			return null;
+    		}).catch(err => {
+					console.log(err);
+    			return res.status(400).send({ 'error' : 'Could not get profile document'});
     		});
     	} else {
     		res.status(404).send({ 'error' : 'No user with this token'})
     	}
+    	return null;
+    }).catch(err => {
+    	console.log(err);
+    	return res.status(400).send({ 'error' : 'Could not get user documnet'});
     });
-  }).catch(function(error) {
+    return null;
+  }).catch(error => {
     console.log(error);
-    res.status(400).send({ 'error' : 'Invalid token'});
+    return res.status(400).send({ 'error' : 'Invalid token'});
   });
 });
 
 exports.createuser = functions.https.onRequest((req, res) => {
 
-	if (req.method != 'POST') {
-		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-		return;
+	if (req.method !== 'POST') {
+		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
-		res.status(400).send({ 'error' : 'No token given'});
-		return;
+		return res.status(400).send({ 'error' : 'No token given'});
 	}
 
-	admin.auth().verifyIdToken(idToken)
-	.then(function(decodedToken) {
+	admin.auth().verifyIdToken(idToken).then(decodedToken => {
   	let uid = decodedToken.uid;
 		var userDocRef = db.collection('users').doc(uid);
 
@@ -111,28 +106,30 @@ exports.createuser = functions.https.onRequest((req, res) => {
 			} else {
 				createUser(uid, req.body, res);
 			}
+			return null;
+		}).catch(err => {
+			console.log(err);
+			return res.status(400).send({'error':'Could not get user document'});
 		});
-	}).catch(function(error) {
+		return null;
+	}).catch(error => {
     console.log(error);
-    res.status(400).send({ 'error' : 'Invalid token'});
+    return res.status(400).send({ 'error' : 'Invalid token'});
 	});
 })
 
 exports.updateuser = functions.https.onRequest((req, res) => {
 
-	if (req.method != 'PUT') {
-		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-		return;
+	if (req.method !== 'PUT') {
+		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
-		res.status(400).send({ 'error' : 'No token given'});
-		return;
+		return res.status(400).send({ 'error' : 'No token given'});
 	}
 
-	admin.auth().verifyIdToken(idToken)
-	.then(function(decodedToken) {
+	admin.auth().verifyIdToken(idToken).then(function(decodedToken) {
   	let uid = decodedToken.uid;
 		var userDocRef = db.collection('users').doc(uid);
 
@@ -142,28 +139,31 @@ exports.updateuser = functions.https.onRequest((req, res) => {
 			} else {
 				res.status(204).send({ "error" : `Profile does not exists`});
 			}
+			return null;
+		}).catch(err => {
+			console.log(err);
+			return res.status(400).send({ 'error' : 'Error getting user document'});
 		});
-	}).catch(function(error) {
+		return null;
+	}).catch(error => {
     console.log(error);
     res.status(400).send({ 'error' : 'Invalid token'});
+    return null;
 	});
 })
 
 exports.deleteuser = functions.https.onRequest((req, res) => {
 
-	if (req.method != 'DELETE') {
-		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-		return;
+	if (req.method !== 'DELETE') {
+		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
-		res.status(400).send({ 'error' : 'No token given'});
-		return;
+		return res.status(400).send({ 'error' : 'No token given'});
 	}
 
-	admin.auth().verifyIdToken(idToken)
-	.then(function(decodedToken) {
+	admin.auth().verifyIdToken(idToken).then(function(decodedToken) {
   	let uid = decodedToken.uid;
 		var userDocRef = db.collection('users').doc(uid);
 
@@ -173,10 +173,15 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 			} else {
 				res.status(204).send({ "error" : `Profile does not exists`});
 			}
+			return null;
+		}).catch(err => {
+			console.log(err);
+			return res.status(400).send( {'error' : 'Error getting user document'});
 		});
-	}).catch(function(error) {
+		return null;
+	}).catch(error => {
     console.log(error);
-    res.status(400).send({ 'error' : 'Invalid token'});
+    return res.status(400).send({ 'error' : 'Invalid token'});
 	});
 })
 
@@ -185,18 +190,17 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 // --------------------DEV ENDPOINTS-------------------------
 // ----------------------------------------------------------
 exports.devgetuser = functions.https.onRequest((req, res) => {
-    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
         res.status(400).send({ 'error': 'No developer key or username given.' });
         return;
     }
 
-    var key = req.query.developerKey;
-    if (key != dev_config) {
-        res.status(400).send({ 'error': "Invalid developer credentials." });
+    var key = req.body.developerKey;
+    if (key !== dev_config) {
+        return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
-    	if (req.method != 'GET') {
-    		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-    		return;
+    	if (req.method !== 'GET') {
+    		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
     	}
 
     	var user = req.query.username;
@@ -212,30 +216,33 @@ exports.devgetuser = functions.https.onRequest((req, res) => {
     			// no user of that name found
     			res.status(404).send({ "error" : `User ${user} not found`});
     		}
+    		return null;
+    	}).catch(err => {
+    		console.log(err);
+    		return res.status(400).send({ 'error' : 'Error getting user document'});
     	});
     }
 });
 
 exports.devcreateuser = functions.https.onRequest((req, res) => {
-    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
         res.status(400).send({ 'error': 'No developer key or username given.' });
         return;
     }
 
-    var key = req.query.developerKey;
-    if (key != dev_config) {
-        res.status(400).send({ 'error': "Invalid developer credentials." });
+    var key = req.body.developerKey;
+    if (key !== dev_config) {
+        return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
-    	if (req.method != 'POST') {
-    		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-    		return;
+    	if (req.method !== 'POST') {
+	    	return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
     	}
 
     	var user = req.query.username;
     	var uid = req.query.uid;
 
-    	if (user == null || uid == null) {
-    		res.status(400).send({ 'error' : 'Missing required query params username or uid'})
+    	if (user === null || uid === null) {
+    		return res.status(400).send({ 'error' : 'Missing required query params username or uid'});
     	}
 
     	var docRef = db.collection("users").where("username", "==", user).limit(1);
@@ -243,29 +250,31 @@ exports.devcreateuser = functions.https.onRequest((req, res) => {
     	docRef.get().then(querySnapshot => {
     		if (!querySnapshot.empty) {
     			// overwriting existing user not allowed
-    			res.status(400).send({ "error" : `${user} already exists`});
-    			return;
+    			return res.status(400).send({ "error" : `${user} already exists`});
     		} else {
     			// helper function to create new account and post to firestore
     			createUser(uid, req.body, res);
     		}
+    		return null;
+    	}).catch(err => {
+    		console.log(err);
+    		return res.status(400).send({'error' : 'Error getting user document'});
     	});
     }
 });
 
 exports.devdeleteuser = functions.https.onRequest((req, res) => {
-    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
         res.status(400).send({ 'error': 'No developer key or username given.' });
         return;
     }
 	
-    var key = req.query.developerKey;
-    if (key != dev_config) {
-        res.status(400).send({ 'error': "Invalid developer credentials." });
+    var key = req.body.developerKey;
+    if (key !== dev_config) {
+        return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
-    	if (req.method != 'DELETE') {
-    		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-    		return;
+    	if (req.method !== 'DELETE') {
+    		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
     	}
 
     	var user = req.query.username;
@@ -281,23 +290,26 @@ exports.devdeleteuser = functions.https.onRequest((req, res) => {
     			// cannot delete nonexistent profile
     			res.status(404).send({ "error" : "User " + user + " not found"});
     		}
+    		return null;
+    	}).catch(err => {
+    		console.log(err);
+    		return res.status(400).send({'error' : 'Trouble with getting query results'});
     	});
     }
 });
 
 exports.devupdateuser = functions.https.onRequest((req, res) => {
-    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
         res.status(400).send({ 'error': 'No developer key or username given.' });
         return;
     }
 	
-    var key = req.query.developerKey;
-    if (key != dev_config) {
-        res.status(400).send({ 'error': "Invalid developer credentials." });
+    var key = req.body.developerKey;
+    if (key !== dev_config) {
+        return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
-    	if (req.method != 'PUT') {
-    		res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-    		return;
+    	if (req.method !== 'PUT') {
+    		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
     	}
 
     	var user = req.query.username;
@@ -312,6 +324,10 @@ exports.devupdateuser = functions.https.onRequest((req, res) => {
     			// cannot update nonexistent profile
     			res.status(404).send({ "error" : "User " + user + " not found"});
     		}
+    		return null;
+    	}).catch(err => {
+    		console.log(err);
+    		return res.status(400).send({ 'error' : 'Error getting user document'});
     	});
     }
 });
@@ -331,10 +347,11 @@ function getUser(doc, res) {
 			data["error"] = doc.data().username + ' profile document not created';
 			res.status(404).send(data);
 		}
+		return null;
 	}).catch(err => {
 		// Server error
 		console.log(err);
-		res.status(400).send({ "error" : "Server Error" });
+		return res.status(400).send({ "error" : "Error getting profile document" });
 	});
 }
 
@@ -347,16 +364,14 @@ function createUser(uid, json, res) {
 
 	// REQUIRED FIELD IS is_student, email, username
 	if (!(json.hasOwnProperty(IS_STUDENT) && json.hasOwnProperty(EMAIL) && json.hasOwnProperty(USERNAME))) {
-		res.status(400).send( { 'error' : `Missing required parameter ${IS_STUDENT}, ${EMAIL}, or ${USERNAME}`});
-		return;
+		return res.status(400).send( { 'error' : `Missing required parameter ${IS_STUDENT}, ${EMAIL}, or ${USERNAME}`});
 	}
 
 	var docRef = db.collection("users").where("username", "==", json[USERNAME]).limit(1);
 
 	docRef.get().then(querySnapshot => {
-        if (!querySnapshot.empty) {
-			res.status(400).send({ "error" : `User with username ${json[USERNAME]} already exists`});
-			return;
+		if (!querySnapshot.empty) {
+			return res.status(400).send({ "error" : `User with username ${json[USERNAME]} already exists`});
 		} else {
 			// creating user document first
 			var userDocRef = db.collection("users").doc(uid);
@@ -372,18 +387,21 @@ function createUser(uid, json, res) {
 
 			userDocRef.set(userJson).catch( err => {
 				console.log(err);
-				res.status(400).send({ "error" : "Server Error" });
-				return;
+				return res.status(400).send({ "error" : "Error setting user document" });
 			});
 			profileDocRef.set(profileJson).catch( err => {
 				console.log(err);
-				res.status(400).send({ "error" : "Server Error" });
+				res.status(400).send({ "error" : "Error setting profile document" });
 				userDocRef.delete(); // Deleting user document because profile doc was not created
-				return;
+				return null;
 			});
 
 			res.status(200).send({ "success" : `Profile created succesfully`});
 		}
+		return null;
+	}).catch(err => {
+		console.log(err);
+		return res.status(400).send({ 'error' : 'Error getting user document'});
 	});
 }
 
@@ -392,14 +410,13 @@ function deleteUser(doc, res) {
 	var profileDocRef = doc.data().profile; // getting profile collection doc
 	// get the profileDocRef data in case the delete is unsuccessful
 	// avoids just having only one side of the profile deleted
-	if (profileDocRef != null) {
+	if (profileDocRef !== null) {
 		profileDocRef.get().then( docSnapshot => {
 			// deleting profile collection doc
 			if (docSnapshot.exists) {
 				profileDocRef.delete().catch( err => {
 					console.log(err);
-					res.status(400).send({ "error" : "User delete unsuccessful"});
-					return;
+					return res.status(400).send({ "error" : "User delete unsuccessful"});
 				});
 			}
 			// deleting user collection doc
@@ -407,14 +424,17 @@ function deleteUser(doc, res) {
 				console.log(err);
 				res.status(400).send({ "error" : "User deleted unsuccessful"});
 				profileDocRef.set(docsSnapshot.data()); // adding profile doc back
-				return;
+				return null;
 			});
-		})
+			return null;
+		}).catch(err => {
+			console.log(err);
+			return res.status(400).send({'error' : 'Error getting profile document'});
+		});
 	} else {
 		doc.ref.delete().catch( err => {
 			console.log(err);
-			res.status(400).send({ "error" : "User deleted unsuccessful"});
-			return;
+			return res.status(400).send({ "error" : "User deleted unsuccessful"});
 		});
 	}
 	
@@ -439,59 +459,56 @@ function updateUser(doc, json, res) {
 		profileJson = createProfProfileJson(json[NAME], json[ABOUT_ME], json[COURSES], json[RESEARCH], null);
 	}
 
-	if (Object.keys(userJson).length != 0) {
+	if (Object.keys(userJson).length !== 0) {
 		db.collection('users').doc(doc.id).update(userJson).catch( err => {
 			console.log(err);
-			res.status(400).send({ 'error' : 'Server error'});
-			return;
+			return res.status(400).send({ 'error' : 'Error updating user document'});
 		});
 	}
 
-	if (Object.keys(profileJson).length != 0) {
+	if (Object.keys(profileJson).length !== 0) {
 		profileDocRef.update(profileJson).catch( err => {
 			console.log(err);
-			res.status(400).send({ "error" : "Server Error" });
-			return;
+			return res.status(400).send({ "error" : "Error updating profile document" });
 		});
 
-		res.status(200).send({ "success" : `${doc.data().username} updated succesfully`});
-		return;
+		return res.status(200).send({ "success" : `${doc.data().username} updated succesfully`});
 	} 
 
-	if (Object.keys(profileJson).length != 0 && Object.keys(userJson).length != 0) {
-		res.status(404).send({ "error" : "No valid update parameter given"});
+	if (Object.keys(profileJson).length !== 0 && Object.keys(userJson).length !== 0) {
+		return res.status(404).send({ "error" : "No valid update parameter given"});
 	}
 }
 
 function createStudentProfileJson(name, aboutme, coursework, gpa, major, year, experience, interests, userRef) {
 	var profileDoc = {};
 
-	if (userRef != null) {
+	if (userRef !== null) {
 		profileDoc[USERREF] = userRef;
 	}
-	if (typeof name == 'string') {
+	if (typeof name === 'string') {
 		profileDoc[NAME] = name;
 	}
-	if (typeof aboutme == 'string') {
+	if (typeof aboutme === 'string') {
 		profileDoc[ABOUT_ME] = aboutme;
 	}
 	if (gpa > 0 && gpa <= 4) {
 		profileDoc[GPA] = gpa;
 	}
-	if (typeof major == 'string') {
+	if (typeof major === 'string') {
 		profileDoc[MAJOR] = major;
 	}
 	// year 5 is graduate
 	if (year > 0 && year <= 5) {
 		profileDoc[YEAR] = year;
 	}
-	if (coursework != null && typeof coursework == 'object') {
+	if (coursework !== null && typeof coursework === 'object') {
 		profileDoc[COURSES] = coursework;
 	}
-	if (interests != null && typeof interests == 'object') {
+	if (interests !== null && typeof interests === 'object') {
 		profileDoc[INTERESTS] = interests;
 	}
-	if (experience != null && typeof experience == 'object') {
+	if (experience !== null && typeof experience === 'object') {
 		profileDoc[EXP] = experience;
 	}
 	return profileDoc;
@@ -499,19 +516,19 @@ function createStudentProfileJson(name, aboutme, coursework, gpa, major, year, e
 
 function createProfProfileJson(name, aboutme, coursework, research, userRef) {
 	var profileDoc = {};
-	if (userRef != null) {
+	if (userRef !== null) {
 		profileDoc[USERREF] = userRef;
 	}
-	if (typeof name == 'string') {
+	if (typeof name === 'string') {
 		profileDoc[NAME] = name;
 	}
-	if (typeof aboutme == 'string') {
+	if (typeof aboutme === 'string') {
 		profileDoc[ABOUT_ME] = aboutme;
 	}
-	if (coursework != null && typeof coursework == 'object') {
+	if (coursework !== null && typeof coursework === 'object') {
 		profileDoc[COURSES] = coursework;
 	}
-	if (research != null && typeof research == 'object') {
+	if (research !== null && typeof research === 'object') {
 		profileDoc[RESEARCH] = research;
 	}
 	return profileDoc;
@@ -521,35 +538,27 @@ function createProfProfileJson(name, aboutme, coursework, research, userRef) {
 function createUserJson(is_student=null, email=null, username=null, profileRef=null, postings=[]) {
 	var userDoc = {};
 
-	if (profileRef != null) {
+	if (profileRef !== null) {
 		userDoc[PROFREF] = profileRef;
 	}
-	if (typeof is_student == 'boolean') {
+	if (typeof is_student === 'boolean') {
 		userDoc[IS_STUDENT] = is_student;
 	}
-	if (typeof email == 'string') {
+	if (typeof email === 'string') {
 		userDoc[EMAIL] = email;
 	}
-	if (typeof username == 'string') {
+	if (typeof username === 'string') {
 		userDoc[USERNAME] = username;
 	}
 	if (Array.isArray(postings)) {
 		userDoc[POSTINGS] = postings;
 	}
-	if (typeof username == 'string') {
+	if (typeof username === 'string') {
 		userDoc[USERNAME] = username;
 	}
 	return userDoc;
 }
 
-
-// exports.user = functions.https.onRequest((req, res) => {
-//     userCrud(req, res, false);
-// });
-
-// exports.user_dev = functions.https.onRequest((req, res) => {
-//     userCrud(req, res, true);
-// });
 
 exports.signUp = functions.https.onRequest((req, res) => {
 
@@ -644,79 +653,6 @@ exports.signIn = functions.https.onRequest((req, res) => {
     return;
 });
 
-// function userCrud(req, res, dev) {
-    
-//     var user = req.query.username;
-
-//     // getting id of firestore collection given username
-//     var docRef = db.collection("users").where("username", "==", user).limit(1);
-//     var token = req.query.token;
-
-//     docRef.get().then(querySnapshot => {
-//         if (!querySnapshot.empty) {
-//             querySnapshot.forEach(doc => {
-//                 // var shouldRetrieveData = true;
-//                 if (!dev) {
-//                     admin.auth().verifyIdToken(token).then(function (decodedToken) {
-//                         if (decodedToken.uid != doc["_fieldsProto"]["username"]["stringValue"]) {
-//                             res.status(400).send({ 'error': "You do not have authorization to access this data." });
-//                         } else {
-//                             switch (req.method) {
-//                                 case 'GET':
-//                                     getUser(doc, res);
-//                                     break;
-//                                 case 'POST':
-//                                     res.status(400).send({ "error": "User already exists" });
-//                                     break;
-//                                 case 'DELETE':
-//                                     deleteUser(doc, res);
-//                                     break;
-//                                 case 'PUT':
-//                                     updateUser(doc, req.body, res);
-//                                     break;
-//                             }
-//                         }
-//                     }).catch(function (error) {
-//                         res.status(400).send({ 'failure': error });
-//                     });
-//                 } else {
-//                     var key = req.query.developerKey;
-//                     if (key != dev_config) {
-//                         res.status(400).send({ 'error': "Invalid developer credentials." });
-//                     } else {
-//                         switch (req.method) {
-//                             case 'GET':
-//                                 getUser(doc, res);
-//                                 break;
-//                             case 'POST':
-//                                 res.status(400).send({ "error": "User already exists" });
-//                                 break;
-//                             case 'DELETE':
-//                                 deleteUser(doc, res);
-//                                 break;
-//                             case 'PUT':
-//                                 updateUser(doc, req.body, res);
-//                                 break;
-//                         }
-//                     }
-//                 }
-                
-//             });
-//         } else {
-//             if (req.method == 'POST') {
-//                 createUser(user, req.body, res);
-//             } else {
-//                 res.status(404).send({ "error": "User " + user + " not found" });
-//             }
-//         }
-//     });
-
-
-//     return null;
-// }
-
-
-
 
 // ----------------------------------------------------------
 // ----------------------------------------------------------
@@ -790,9 +726,9 @@ function verifyJson(standing, json) {
     var req_fields = [];
 
     // checking if profile is student or professor
-    if (student.localeCompare(standing) == 0) {
+    if (student.localeCompare(standing) === 0) {
         req_fields = req_stud_fields;
-    } else if (professor.localeCompare(standing) == 0) {
+    } else if (professor.localeCompare(standing) === 0) {
         req_fields = req_prof_fields;
     }
 
@@ -800,7 +736,7 @@ function verifyJson(standing, json) {
 
     req_fields.forEach( fields => {
         if (fields[0] in json) {
-            if (typeof json[fields[0]] == fields[1]) {
+            if (typeof json[fields[0]] === fields[1]) {
                 verifiedData[fields[0]] = json[fields[0]];
             }
         }
@@ -817,9 +753,11 @@ function verifyJson(standing, json) {
  */
 function getProfile(standing, name, res, amount) {
 
+	var docRef, data;
+
     if (name) {
-        var docRef = db.collection(standing).doc(name);
-        var data = {};
+        docRef = db.collection(standing).doc(name);
+        data = {};
 
         docRef.get().then(docSnapshot => {
             if (docSnapshot.exists) {
@@ -829,22 +767,26 @@ function getProfile(standing, name, res, amount) {
                 data["error"] = name + ' does not exist!';
                 res.status(404).send(data);
             }
+            return null;
         }).catch(err => {
             console.log(err);
             res.status(400).send({ "error" : "Server Error" });
+            return null;
         });
     } else {
-        var amount = amount ? amount : 5;
-        var data = {}
-        var docRef = db.collection(standing).limit(amount);
+        amount = amount ? amount : 5;
+        data = {}
+        docRef = db.collection(standing).limit(amount);
         docRef.get().then(docsSnapshot => {
             docsSnapshot.forEach(doc => {
                 data[doc.id] = doc.data();
             });
             res.status(200).send(data);
+            return null;
         }).catch(err => {
             console.log(err);
             res.status(400).send({ "error" : "Server Error" });
+            return null;
         });
     }
     return;
@@ -875,9 +817,11 @@ function createProfile(standing, name, res, payload) {
         } else {
             res.status(400).send({ "error" : name + " already exists" });
         }
+        return null;
     }).catch(err => {
         console.log(err);
         res.status(400).send({ "error" : "Server Error" });
+        return null;
     });
     return;
 }
@@ -902,9 +846,11 @@ function deleteProfile(standing, name, res) {
         } else {
             res.status(400).send({ "error" : name + " does not exist" });
         }
+        return null;
     }).catch(err => {
         console.log(err);
         res.status(400).send({ "error" : "Server Error" });
+        return null;
     });
     return;
 }
@@ -930,8 +876,10 @@ function updateProfile(standing, name, res, payload) {
         } else {
             res.status(400).send({ "error" : name + " does not exist" });
         }
+        return null;
     }).catch(err => {
         console.log(err);
         res.status(400).send({ "error" : "Server Error" });
+        return null;
     });
 }
