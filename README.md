@@ -12,25 +12,34 @@ Once deployed the base url will be https://us-central1-research-bay.cloudfunctio
 ## USERS
 
 ### GET /signIn
-Verifies a login token returns the entry in the users database of the user that the token corresponds to.
+Takes in an email and password. Returns token and the user's entry in the users database.
 
-Ex. '/signIn?token=[token]'
+Ex. '/signIn'
+
+Example JSON Request Format:
+```
+{
+	"email" : [string],
+  "password" : [string]
+}
+```
 
 Example JSON Return Format:
 ```
 {
     "username": [string],
     "is_student": [boolean],
-    "profile": [string]",
+    "profile": [string],
     "postings": {
         "values": [string array]
     },
-    "email": [string]
+    "email": [string],
+    "token": [string]
 }
 ```
 
 ### POST /signUp
-Creates user, given an email and password.
+Creates and logs in user, given user information (e.g. email and password).
 
 Ex. `/signUp`
 
@@ -43,14 +52,16 @@ Example JSON Request Format:
 	"name"  : "Test User",
 	"year"  : 1,
 	"is_student" : true,
-	"skills" : ["MIPS Assembly", "x86 Assembly"]
+  "experience" : {
+    "skills" : ["MIPS Assembly", "x86 Assembly"]
+  }
 }
 ```
 
 Example JSON Response Format:
 ```
 {
-    "success": "[userID] created succesfully"
+    "token" : [string]
 }
 ```
 
@@ -59,43 +70,52 @@ Example JSON Response Format:
 Send Requests with the current users idtoken. This only allows the current user to do CRUD operations on their own information based off the given idToken.
 
 ### GET /getuser
-Gets the profile information of a given idToken using query string 'token'. Returns a json format of the stored profile information if the given user exists. Will return error if no token is given and if token does not work. The token is what the client receives once they login.
+Gets the profile information of a given idToken using body param 'token'. Returns a json format of the stored profile information if the given user exists. Will return error if no token is given and if token does not work. The token is what the client receives once they login.
 
-Ex. '/getuser?token=[token]'
+Ex. '/getuser'
+Example JSON Body Format:
+```
+{
+  "token" : [idToken]
+}
+```
 
-Example JSON Return Format: NOTE*** May be changed
+Example JSON Return Format: ***NOTE*** May be changed
 ```
 {
     "username": {
         "name": "[string]",
         "year": [int],
         "major": "[string]",
-        "skills": [
-            "[string]"
-        ]
+        "experience" : {
+          "skills": [
+              "[string]"
+          ]
+        }
     }
 }
 ```
 
 ### POST /createuser
-Creates the profile information that is given through the http request. Use the query string 'token' to indicate the idToken of the current user. Must pass parameters 'is_student', 'email', and 'username'. Will return error if given username already exists or there was error creating new profile.
+Creates the profile information that is given through the http request. Pass 'token' in body to indicate the idToken of the current user. Must pass parameters 'is_student', 'email', and 'username'. Will return error if given username already exists or there was error creating new profile.
 
 For professors, set 'is_student' to false, and only the following parameters will be added to the profile: 'name', 'aboutme', 'coursework', 'research'.
 
 For students, set 'is_student' to true, and only following parameters will be added to profile: 'name', 'aboutme', 'coursework', 'gpa', 'major', 'year', 'experience'.
 
-Ex. `/createuser?token=[token]`
+Ex. `/createuser`
 
 Example JSON body:
 ```
 {
+  "token" : [idToken],
   "username" : "t2",
 	"major" : "CS",
 	"email" : "test2@illinois.edu",
 	"name"  : "test2",
 	"year"  : 1,
 	"is_student" : true,
-	"experience" : { 
+	"experience" : {
       "skills" : [
           Coding", "Python
           ]
@@ -106,29 +126,42 @@ Example JSON body:
 ### PUT /updateuser
 Updates a profile given a query string 'token' and a json body. Same parameters as createuser but you will not be able to edit 'username' and 'is_student' parameters. Will return error if given token is not valid.
 
-Ex. `/updateuser?token=[token]`
+Ex. `/updateuser`
 
 Exmaple JSON body:
 ```
 {
+  "token" : [idToken],
 	"major" : "CS",
   "year"  : 2
 }
 ```
 
 ### DELETE /deleteuser
-Deletes a profile given the query string 'token'. Will return error if token is not valid.
+Deletes a profile given the body param string 'token'. Will return error if token is not valid.
 
-Ex. `/deleteuser?token=[token]`
+Ex. `/deleteuser`
+Example JSON Body Format:
+```
+{
+  "token" : [idToken]
+}
+```
 
 ## USERS Dev Endpoints
 
 As of right now, dev endpoints have no way of verification.
 
 ### GET /devgetuser
-Gets the profile information of a given username using query string 'username'. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
+Gets the profile information of a given username using query string 'username'. Requires a developer key given in the body. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
 
 Ex. '/devgetuser?username=test2'
+Example JSON Body Format:
+```
+{
+  "developerKey" : [idToken]
+}
+```
 
 Example JSON Return Format: ***NOTE*** May be changed
 ```
@@ -145,7 +178,7 @@ Example JSON Return Format: ***NOTE*** May be changed
 ```
 
 ### POST /devcreateuser
-Creates the profile information that is given through the http request. Use the query string 'username' to indicate the username of profile. Also requires query string 'uid' to link the profile to a account. You can get the uid from authentication tab on the firebase console. Must pass parameters 'is_student', 'email', and 'username'. Will return error if given username already exists or there was error creating new profile.
+Creates the profile information that is given through the http request. REQUIRES developerKey in body. Use the query string 'username' to indicate the username of profile. Also requires query string 'uid' to link the profile to a account. You can get the uid from authentication tab on the firebase console. Must pass parameters 'is_student', 'email', and 'username'. Will return error if given username already exists or there was error creating new profile.
 
 For professors, set 'is_student' to false, and only the following parameters will be added to the profile: 'name', 'aboutme', 'coursework', 'research'.
 
@@ -156,13 +189,14 @@ Ex. `/devcreateuser?username=test2&uid=[userId]`
 Example JSON body:
 ```
 {
+  "developerKey" : [developerKey],
   "username" : "t2",
   "major" : "CS",
   "email" : "test2@illinois.edu",
   "name"  : "test2",
   "year"  : 1,
   "is_student" : true,
-  "experience" : { 
+  "experience" : {
       "skills" : [
           Coding", "Python
           ]
@@ -171,23 +205,29 @@ Example JSON body:
 ```
 
 ### PUT /devupdateuser
-Updates a profile given a query string 'username' and a json body. Same parameters as createuser but you will not be able to edit 'username' and 'is_student' parameters. Will return error if given token is not valid.
+Updates a profile given a query string 'username' and a json body. REQUIRES developerKey in body. Same parameters as createuser but you will not be able to edit 'username' and 'is_student' parameters. Will return error if given token is not valid.
 
 Ex. `/devupdateuser?username=test2`
 
 Exmaple JSON body:
 ```
 {
+  "developerKey" : [developerKey],
   "major" : "CS",
   "year"  : 3
 }
 ```
 
 ### DELETE /devdeleteuser
-Deletes a profile given the query string 'username'. Will return error if username does not exist.
+Deletes a profile given the query string 'username'. REQUIRES developerKey in body. Will return error if username does not exist.
 
 Ex. `/devdeleteuser?username=test2`
-
+Example JSON Body Format:
+```
+{
+  "devloperKey" : [developerKey]
+}
+```
 
 
 ## Student Profiles (old database)
@@ -222,7 +262,7 @@ Example JSON return format:
    "GPA": [int],
    "Year": [string],
    "About Me": [string]
-	
+
 }
 ```
 
@@ -256,7 +296,7 @@ Example JSON body:
    "GPA": [int],
    "Year": [string],
    "About Me": [string]
-	
+
 }
 ```
 
@@ -290,7 +330,7 @@ Example JSON body:
    "GPA": [int],
    "Year": [string],
    "About Me": [string]
-	
+
 }
 ```
 
@@ -356,7 +396,7 @@ Example JSON body:
    },
    "Email": [string],
    "Bio": [string]
-	
+
 }
 ```
 
@@ -381,7 +421,7 @@ Example JSON body:
    },
    "Email": [string],
    "Bio": [string]
-	
+
 }
 ```
 

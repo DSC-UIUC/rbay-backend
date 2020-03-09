@@ -1,15 +1,11 @@
 const functions = require('firebase-functions');
-
-// process.env.NODE_CONFIG_DIR = '../config';
-// const config = require('config');
-
-const dev_config = functions.config().developer.key;
-
-var admin = require("firebase-admin");
-
+const request = require('request');
+const admin = require("firebase-admin");
 const firebase = require('firebase');
 
-var firebaseConfig = process.env.FIREBASE_CONFIG;
+const dev_config = functions.config().developer.key;
+const api_key = functions.config().api.key;
+const firebaseConfig = process.env.FIREBASE_CONFIG;
 
 if (firebaseConfig) {
     firebase.initializeApp(firebaseConfig);
@@ -20,7 +16,7 @@ admin.initializeApp({
     databaseURL: "https://research-bay.firebaseio.com"
 });
 
-var db = admin.firestore();
+const db = admin.firestore();
 
 const NAME = 'name';
 const ABOUT_ME = 'aboutme';
@@ -34,18 +30,19 @@ const RESEARCH = 'research';
 const IS_STUDENT = 'is_student';
 const EMAIL = 'email';
 const USERNAME = 'username';
+const PASSWORD = 'password';
 const PROFREF = 'profile';
 const USERREF = 'user';
 const POSTINGS = 'postings';
+const DEVELOPER_KEY = 'developerKey';
 
 exports.getuser = functions.https.onRequest((req, res) => {
 
 	if (req.method !== 'GET') {
 		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
-
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
 		return res.status(400).send({ 'error' : 'No token given'});
 	}
@@ -94,7 +91,7 @@ exports.createuser = functions.https.onRequest((req, res) => {
 		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
 		return res.status(400).send({ 'error' : 'No token given'});
 	}
@@ -127,7 +124,7 @@ exports.updateuser = functions.https.onRequest((req, res) => {
 		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
 		return res.status(400).send({ 'error' : 'No token given'});
 	}
@@ -161,7 +158,7 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.query.token;
+	var idToken = req.body.token;
 	if (!idToken || idToken === "") {
 		return res.status(400).send({ 'error' : 'No token given'});
 	}
@@ -192,10 +189,13 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 // ----------------------------------------------------------
 // --------------------DEV ENDPOINTS-------------------------
 // ----------------------------------------------------------
-// TODO secure each endpoint
 exports.devgetuser = functions.https.onRequest((req, res) => {
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
 
-    var key = req.query.developerKey;
+    var key = req.body.developerKey;
     if (key !== dev_config) {
         return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
@@ -225,8 +225,12 @@ exports.devgetuser = functions.https.onRequest((req, res) => {
 });
 
 exports.devcreateuser = functions.https.onRequest((req, res) => {
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
 
-    var key = req.query.developerKey;
+    var key = req.body.developerKey;
     if (key !== dev_config) {
         return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
@@ -260,9 +264,12 @@ exports.devcreateuser = functions.https.onRequest((req, res) => {
 });
 
 exports.devdeleteuser = functions.https.onRequest((req, res) => {
-
-	// ADD DEV CHECK
-    var key = req.query.developerKey;
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
+	
+    var key = req.body.developerKey;
     if (key !== dev_config) {
         return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
@@ -292,9 +299,12 @@ exports.devdeleteuser = functions.https.onRequest((req, res) => {
 });
 
 exports.devupdateuser = functions.https.onRequest((req, res) => {
-
-	// ADD DEV CHECK
-    var key = req.query.developerKey;
+    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
+	
+    var key = req.body.developerKey;
     if (key !== dev_config) {
         return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
@@ -550,86 +560,96 @@ function createUserJson(is_student=null, email=null, username=null, profileRef=n
 }
 
 
-// exports.user = functions.https.onRequest((req, res) => {
-//     userCrud(req, res, false);
-// });
+exports.signUp = functions.https.onRequest((req, res) => {
 
-// exports.user_dev = functions.https.onRequest((req, res) => {
-//     userCrud(req, res, true);
-// });
-
-exports.signUp = functions.https.onRequest((request, response) => {
-
-    switch (request.method) {
+    switch (req.method) {
         case 'POST':
-            var email = request.body.email;
-            var password = request.body.password;
+            if (!(req.body.hasOwnProperty(IS_STUDENT) && req.body.hasOwnProperty(EMAIL) && req.body.hasOwnProperty(USERNAME)
+                && req.body.hasOwnProperty(EMAIL) && req.body.hasOwnProperty(PASSWORD))) {
+                res.status(400).send({
+                    'error': `Missing required parameter ${EMAIL}, ${PASSWORD}, ${IS_STUDENT}, ${EMAIL}, or ${USERNAME}`
+                });
+                return;
+            }
+
+            var email = req.body.email;
+            var password = req.body.password;
+            var username = req.body.username;
+            // See the UserRecord reference doc for the contents of userRecord.
+            var docRef = db.collection("users").where("username", "==", username).limit(1);
+            // checking if user exists
+            docRef.get().then(querySnapshot => {
+                if (!querySnapshot.empty) {
+                    // overwriting existing user not allowed
+                    res.status(400).send({ "error": `${username} already exists` });
+                    return;
+                }
+            }); 
 
             admin.auth().createUser({
                 email: email,
                 password: password
-            }).then(userRecord => {
-                // See the UserRecord reference doc for the contents of userRecord.
-                createUser(userRecord.uid, request.body, response);
-                return null;
-            }).catch(error => {
-            		console.log(error);
-                return response.status(400).send({ 'error' : 'Error creating user' });
+            }).then(function (userRecord) {
+                var createUserResponse;
+                createUser(userRecord.uid, req.body, createUserResponse);
+                request.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + api_key + '&email=' + email + '&password=' + password + '&returnSecureToken=true', function (error, response, body) {
+                    var bodyAsJson = JSON.parse(body);
+                    var data = {};
+                    data["token"] = bodyAsJson["idToken"];
+                    res.status(200).send(data);
+                });
+            }).catch(function (error) {
+                res.status(400).send({ 'failure': error });
             });
             break;
         default:
-            return response.status(400).send({ 'failure': 'Must be a POST request.' });
+            res.status(400).send({ 'failure': 'Must be a POST request.' });
     }
 });
 
-exports.signIn = functions.https.onRequest((request, response) => {
-    switch (request.method) {
+exports.signIn = functions.https.onRequest((req, res) => {
+    if (!(EMAIL in req.body && PASSWORD in req.body)) {
+        res.status(400).send({ "failure" : "Missing email or password." });
+        return;
+    }
+
+    var email = req.body.email;
+    var password = req.body.password;
+    switch (req.method) {
         case 'GET':
-            var idToken = request.query.token;
+            request.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + api_key +'&email=' + email + '&password=' + password + '&returnSecureToken=true', function (error, response, body) {
+                if (response.statusCode != 200) {
+                    res.status(400).send({ 'failure': 'Incorrect email or password.' });
+                    return;
+                } else {
+                    var bodyAsJson = JSON.parse(body);
+                    var data = {};
+                    data["token"] = bodyAsJson["idToken"];
+                    email = bodyAsJson["email"];
+                    var docRef = db.collection("users").where("email", "==", email).limit(1);
+                    docRef.get().then(querySnapshot => {
+                        querySnapshot.forEach(doc => {
+                            var dict = doc["_fieldsProto"];
+                            var keys = Object.keys(dict);
 
-            // Verify login token and find user.
-            admin.auth().verifyIdToken(idToken)
-                .then(decodedToken => {
-                    let uid = decodedToken.uid;
-                    admin.auth().getUser(uid)
-                        .then(userRecord => {
-                            // Lookup user in users database.
-                            email = userRecord.email;
-                            var docRef = db.collection("users").where("email", "==", email).limit(1);
-                            docRef.get().then(querySnapshot => {
-                                querySnapshot.forEach(doc => {
-                                    var dict = doc["_fieldsProto"];
-                                    var keys = Object.keys(dict);
-                                    var data = {};
+                            for (index in keys) {
+                                var nameKey = keys[index];
+                                if (keys[index] != "profile") {
+                                    var valueTypeKey = dict[nameKey]["valueType"];
+                                    var value = dict[nameKey][valueTypeKey];
+                                    data[nameKey] = value;
+                                }
+                            }
 
-                                    for (index in keys) {
-                                        var nameKey = keys[index];
-                                        var valueTypeKey = dict[nameKey]["valueType"];
-                                        var value = dict[nameKey][valueTypeKey];
-                                        data[nameKey] = value;
-                                    }
-
-                                    response.status(200).send(data);
-                                });
-                                return null;
-                            }).catch(err => {
-                            	console.log(err);
-                            	return response,status(400).send({'error' : 'Error getting user document'});
-                            });
-                            return null;
-                        })
-                        .catch(error => {
-                            return response.status(400).send({ 'failure': error });
+                            res.status(200).send(data);
                         });
-                        return null;
-                }).catch(error => {
-                    return response.status(400).send({ 'failure': error });
-                });
+                    });
+                }
+            });
             break;
         default:
-            return response.status(400).send({ 'failure': 'Must be a GET request.' });
+            res.status(400).send({ 'failure': 'Must be a GET request.' });
     }
-   
     return;
 });
 
