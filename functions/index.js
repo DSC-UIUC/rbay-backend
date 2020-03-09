@@ -68,7 +68,7 @@ exports.getuser = functions.https.onRequest((req, res) => {
     			return null;
     		}).catch(err => {
 					console.log(err);
-    			return res.status(400).send({ 'error' : 'Could not get profile document'});
+    			return res.status(500).send({ 'error' : 'Could not get profile document'});
     		});
     	} else {
     		res.status(404).send({ 'error' : 'No user with this token'})
@@ -76,7 +76,7 @@ exports.getuser = functions.https.onRequest((req, res) => {
     	return null;
     }).catch(err => {
     	console.log(err);
-    	return res.status(400).send({ 'error' : 'Could not get user documnet'});
+    	return res.status(500).send({ 'error' : 'Could not get user documnet'});
     });
     return null;
   }).catch(error => {
@@ -109,7 +109,7 @@ exports.createuser = functions.https.onRequest((req, res) => {
 			return null;
 		}).catch(err => {
 			console.log(err);
-			return res.status(400).send({'error':'Could not get user document'});
+			return res.status(500).send({'error':'Could not get user document'});
 		});
 		return null;
 	}).catch(error => {
@@ -142,7 +142,7 @@ exports.updateuser = functions.https.onRequest((req, res) => {
 			return null;
 		}).catch(err => {
 			console.log(err);
-			return res.status(400).send({ 'error' : 'Error getting user document'});
+			return res.status(500).send({ 'error' : 'Error getting user document'});
 		});
 		return null;
 	}).catch(error => {
@@ -176,7 +176,7 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 			return null;
 		}).catch(err => {
 			console.log(err);
-			return res.status(400).send( {'error' : 'Error getting user document'});
+			return res.status(500).send( {'error' : 'Error getting user document'});
 		});
 		return null;
 	}).catch(error => {
@@ -219,7 +219,7 @@ exports.devgetuser = functions.https.onRequest((req, res) => {
     		return null;
     	}).catch(err => {
     		console.log(err);
-    		return res.status(400).send({ 'error' : 'Error getting user document'});
+    		return res.status(500).send({ 'error' : 'Error getting user document'});
     	});
     }
 });
@@ -258,7 +258,7 @@ exports.devcreateuser = functions.https.onRequest((req, res) => {
     		return null;
     	}).catch(err => {
     		console.log(err);
-    		return res.status(400).send({'error' : 'Error getting user document'});
+    		return res.status(500).send({'error' : 'Error getting user document'});
     	});
     }
 });
@@ -293,7 +293,7 @@ exports.devdeleteuser = functions.https.onRequest((req, res) => {
     		return null;
     	}).catch(err => {
     		console.log(err);
-    		return res.status(400).send({'error' : 'Trouble with getting query results'});
+    		return res.status(500).send({'error' : 'Trouble with getting query results'});
     	});
     }
 });
@@ -327,7 +327,7 @@ exports.devupdateuser = functions.https.onRequest((req, res) => {
     		return null;
     	}).catch(err => {
     		console.log(err);
-    		return res.status(400).send({ 'error' : 'Error getting user document'});
+    		return res.status(500).send({ 'error' : 'Error getting user document'});
     	});
     }
 });
@@ -351,7 +351,7 @@ function getUser(doc, res) {
 	}).catch(err => {
 		// Server error
 		console.log(err);
-		return res.status(400).send({ "error" : "Error getting profile document" });
+		return res.status(500).send({ "error" : "Error getting profile document" });
 	});
 }
 
@@ -387,11 +387,11 @@ function createUser(uid, json, res) {
 
 			userDocRef.set(userJson).catch( err => {
 				console.log(err);
-				return res.status(400).send({ "error" : "Error setting user document" });
+				return res.status(500).send({ "error" : "Error setting user document" });
 			});
 			profileDocRef.set(profileJson).catch( err => {
 				console.log(err);
-				res.status(400).send({ "error" : "Error setting profile document" });
+				res.status(500).send({ "error" : "Error setting profile document" });
 				userDocRef.delete(); // Deleting user document because profile doc was not created
 				return null;
 			});
@@ -401,7 +401,7 @@ function createUser(uid, json, res) {
 		return null;
 	}).catch(err => {
 		console.log(err);
-		return res.status(400).send({ 'error' : 'Error getting user document'});
+		return res.status(500).send({ 'error' : 'Error getting user document'});
 	});
 }
 
@@ -416,25 +416,25 @@ function deleteUser(doc, res) {
 			if (docSnapshot.exists) {
 				profileDocRef.delete().catch( err => {
 					console.log(err);
-					return res.status(400).send({ "error" : "User delete unsuccessful"});
+					return res.status(500).send({ "error" : "User delete unsuccessful"});
 				});
 			}
 			// deleting user collection doc
 			doc.ref.delete().catch( err => {
 				console.log(err);
-				res.status(400).send({ "error" : "User deleted unsuccessful"});
+				res.status(500).send({ "error" : "User deleted unsuccessful"});
 				profileDocRef.set(docsSnapshot.data()); // adding profile doc back
 				return null;
 			});
 			return null;
 		}).catch(err => {
 			console.log(err);
-			return res.status(400).send({'error' : 'Error getting profile document'});
+			return res.status(500).send({'error' : 'Error getting profile document'});
 		});
 	} else {
 		doc.ref.delete().catch( err => {
 			console.log(err);
-			return res.status(400).send({ "error" : "User deleted unsuccessful"});
+			return res.status(500).send({ "error" : "User deleted unsuccessful"});
 		});
 	}
 	
@@ -462,14 +462,14 @@ function updateUser(doc, json, res) {
 	if (Object.keys(userJson).length !== 0) {
 		db.collection('users').doc(doc.id).update(userJson).catch( err => {
 			console.log(err);
-			return res.status(400).send({ 'error' : 'Error updating user document'});
+			return res.status(500).send({ 'error' : 'Error updating user document'});
 		});
 	}
 
 	if (Object.keys(profileJson).length !== 0) {
 		profileDocRef.update(profileJson).catch( err => {
 			console.log(err);
-			return res.status(400).send({ "error" : "Error updating profile document" });
+			return res.status(500).send({ "error" : "Error updating profile document" });
 		});
 
 		return res.status(200).send({ "success" : `${doc.data().username} updated succesfully`});
@@ -581,15 +581,18 @@ exports.signUp = functions.https.onRequest((req, res) => {
             docRef.get().then(querySnapshot => {
                 if (!querySnapshot.empty) {
                     // overwriting existing user not allowed
-                    res.status(400).send({ "error": `${username} already exists` });
-                    return;
+                    return res.status(400).send({ "error": `${username} already exists` });
                 }
+                return null;
+            }).catch(err => {
+            	console.log(err);
+            	return res.status(500).send({ 'error' : 'Error getting user docuement'});
             }); 
 
             admin.auth().createUser({
                 email: email,
                 password: password
-            }).then(function (userRecord) {
+            }).then(userRecord => {
                 var createUserResponse;
                 createUser(userRecord.uid, req.body, createUserResponse);
                 request.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + api_key + '&email=' + email + '&password=' + password + '&returnSecureToken=true', function (error, response, body) {
@@ -598,8 +601,9 @@ exports.signUp = functions.https.onRequest((req, res) => {
                     data["token"] = bodyAsJson["idToken"];
                     res.status(200).send(data);
                 });
-            }).catch(function (error) {
-                res.status(400).send({ 'failure': error });
+                return null;
+            }).catch(error => {
+                return res.status(500).send({ 'failure': error });
             });
             break;
         default:
@@ -618,7 +622,7 @@ exports.signIn = functions.https.onRequest((req, res) => {
     switch (req.method) {
         case 'GET':
             request.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + api_key +'&email=' + email + '&password=' + password + '&returnSecureToken=true', function (error, response, body) {
-                if (response.statusCode != 200) {
+                if (response.statusCode !== 200) {
                     res.status(400).send({ 'failure': 'Incorrect email or password.' });
                     return;
                 } else {
@@ -634,15 +638,18 @@ exports.signIn = functions.https.onRequest((req, res) => {
 
                             for (index in keys) {
                                 var nameKey = keys[index];
-                                if (keys[index] != "profile") {
+                                if (keys[index] !== "profile") {
                                     var valueTypeKey = dict[nameKey]["valueType"];
                                     var value = dict[nameKey][valueTypeKey];
                                     data[nameKey] = value;
                                 }
                             }
-
                             res.status(200).send(data);
                         });
+                        return null;
+                    }).catch(err => {
+                    	console.log(err);
+                    	return res.status(500).send({ 'error' : 'Error getting user document'});
                     });
                 }
             });
@@ -770,7 +777,7 @@ function getProfile(standing, name, res, amount) {
             return null;
         }).catch(err => {
             console.log(err);
-            res.status(400).send({ "error" : "Server Error" });
+            res.status(500).send({ "error" : "Server Error" });
             return null;
         });
     } else {
@@ -785,7 +792,7 @@ function getProfile(standing, name, res, amount) {
             return null;
         }).catch(err => {
             console.log(err);
-            res.status(400).send({ "error" : "Server Error" });
+            res.status(500).send({ "error" : "Server Error" });
             return null;
         });
     }
@@ -820,7 +827,7 @@ function createProfile(standing, name, res, payload) {
         return null;
     }).catch(err => {
         console.log(err);
-        res.status(400).send({ "error" : "Server Error" });
+        res.status(500).send({ "error" : "Server Error" });
         return null;
     });
     return;
@@ -849,7 +856,7 @@ function deleteProfile(standing, name, res) {
         return null;
     }).catch(err => {
         console.log(err);
-        res.status(400).send({ "error" : "Server Error" });
+        res.status(500).send({ "error" : "Server Error" });
         return null;
     });
     return;
@@ -879,7 +886,7 @@ function updateProfile(standing, name, res, payload) {
         return null;
     }).catch(err => {
         console.log(err);
-        res.status(400).send({ "error" : "Server Error" });
+        res.status(500).send({ "error" : "Server Error" });
         return null;
     });
 }
