@@ -184,7 +184,6 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 // ----------------------------------------------------------
 // --------------------DEV ENDPOINTS-------------------------
 // ----------------------------------------------------------
-// TODO secure each endpoint
 exports.devgetuser = functions.https.onRequest((req, res) => {
     if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
         res.status(400).send({ 'error': 'No developer key or username given.' });
