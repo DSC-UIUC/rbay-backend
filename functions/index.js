@@ -38,9 +38,11 @@ const RESEARCH = 'research';
 const IS_STUDENT = 'is_student';
 const EMAIL = 'email';
 const USERNAME = 'username';
+const PASSWORD = 'password';
 const PROFREF = 'profile';
 const USERREF = 'user';
 const POSTINGS = 'postings';
+const DEVELOPER_KEY = 'developerKey';
 
 exports.getuser = functions.https.onRequest((req, res) => {
 
@@ -184,6 +186,10 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 // ----------------------------------------------------------
 // TODO secure each endpoint
 exports.devgetuser = functions.https.onRequest((req, res) => {
+    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
 
     var key = req.query.developerKey;
     if (key != dev_config) {
@@ -212,6 +218,10 @@ exports.devgetuser = functions.https.onRequest((req, res) => {
 });
 
 exports.devcreateuser = functions.https.onRequest((req, res) => {
+    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
 
     var key = req.query.developerKey;
     if (key != dev_config) {
@@ -245,8 +255,11 @@ exports.devcreateuser = functions.https.onRequest((req, res) => {
 });
 
 exports.devdeleteuser = functions.https.onRequest((req, res) => {
-
-	// ADD DEV CHECK
+    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
+	
     var key = req.query.developerKey;
     if (key != dev_config) {
         res.status(400).send({ 'error': "Invalid developer credentials." });
@@ -274,8 +287,11 @@ exports.devdeleteuser = functions.https.onRequest((req, res) => {
 });
 
 exports.devupdateuser = functions.https.onRequest((req, res) => {
-
-	// ADD DEV CHECK
+    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
+        res.status(400).send({ 'error': 'No developer key or username given.' });
+        return;
+    }
+	
     var key = req.query.developerKey;
     if (key != dev_config) {
         res.status(400).send({ 'error': "Invalid developer credentials." });
@@ -339,8 +355,7 @@ function createUser(uid, json, res) {
 	var docRef = db.collection("users").where("username", "==", json[USERNAME]).limit(1);
 
 	docRef.get().then(querySnapshot => {
-		if (!querySnapshot.empty) {
-			console.log("testsetseatf");
+        if (!querySnapshot.empty) {
 			res.status(400).send({ "error" : `User with username ${json[USERNAME]} already exists`});
 			return;
 		} else {
@@ -541,13 +556,17 @@ exports.signUp = functions.https.onRequest((req, res) => {
 
     switch (req.method) {
         case 'POST':
+            if (!(req.body.hasOwnProperty(IS_STUDENT) && req.body.hasOwnProperty(EMAIL) && req.body.hasOwnProperty(USERNAME)
+                && req.body.hasOwnProperty(EMAIL) && req.body.hasOwnProperty(PASSWORD))) {
+                res.status(400).send({
+                    'error': `Missing required parameter ${EMAIL}, ${PASSWORD}, ${IS_STUDENT}, ${EMAIL}, or ${USERNAME}`
+                });
+                return;
+            }
+
             var email = req.body.email;
             var password = req.body.password;
             var username = req.body.username;
-            if (!(req.body.hasOwnProperty(IS_STUDENT) && req.body.hasOwnProperty(EMAIL) && req.body.hasOwnProperty(USERNAME))) {
-                res.status(400).send({ 'error': `Missing required parameter ${IS_STUDENT}, ${EMAIL}, or ${USERNAME}` });
-                return;
-            }
             // See the UserRecord reference doc for the contents of userRecord.
             var docRef = db.collection("users").where("username", "==", username).limit(1);
             // checking if user exists
@@ -581,7 +600,7 @@ exports.signUp = functions.https.onRequest((req, res) => {
 });
 
 exports.signIn = functions.https.onRequest((req, res) => {
-    if (!("email" in req.body && "password" in req.body)) {
+    if (!(EMAIL in req.body && PASSWORD in req.body)) {
         res.status(400).send({ "failure" : "Missing email or password." });
         return;
     }
