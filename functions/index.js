@@ -581,9 +581,13 @@ exports.signUp = functions.https.onRequest((req, res) => {
 });
 
 exports.signIn = functions.https.onRequest((req, res) => {
+    if (!("email" in req.body && "password" in req.body)) {
+        res.status(400).send({ "failure" : "Missing email or password." });
+        return;
+    }
+
     var email = req.body.email;
     var password = req.body.password;
-
     switch (req.method) {
         case 'GET':
             request.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + api_key +'&email=' + email + '&password=' + password + '&returnSecureToken=true', function (error, response, body) {
