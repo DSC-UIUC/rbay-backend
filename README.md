@@ -70,15 +70,9 @@ Example JSON Response Format:
 Send Requests with the current users idtoken. This only allows the current user to do CRUD operations on their own information based off the given idToken.
 
 ### GET /getuser
-Gets the profile information of a given idToken using body param 'token'. Returns a json format of the stored profile information if the given user exists. Will return error if no token is given and if token does not work. The token is what the client receives once they login.
+Gets the profile information of a given idToken using query param 'token'. Returns a json format of the stored profile information if the given user exists. Will return error if no token is given and if token does not work. The token is what the client receives once they login.
 
-Ex. '/getuser'
-Example JSON Body Format:
-```
-{
-  "token" : [idToken]
-}
-```
+Ex. '/getuser?token=[idToken]'
 
 Example JSON Return Format: ***NOTE*** May be changed
 ```
@@ -153,15 +147,9 @@ Example JSON Body Format:
 As of right now, dev endpoints have no way of verification.
 
 ### GET /devgetuser
-Gets the profile information of a given username using query string 'username'. Requires a developer key given in the body. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
+Gets the profile information of a given username using query string 'username'. Requires a developer key given in the query. Returns a json format of the stored profile information if the given user exists. Will return error if no username is given and if username does not exist.
 
-Ex. '/devgetuser?username=test2'
-Example JSON Body Format:
-```
-{
-  "developerKey" : [idToken]
-}
-```
+Ex. '/devgetuser?username=test2&developerKey=[developerToken]'
 
 Example JSON Return Format: ***NOTE*** May be changed
 ```

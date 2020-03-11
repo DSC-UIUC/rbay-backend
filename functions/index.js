@@ -42,7 +42,7 @@ exports.getuser = functions.https.onRequest((req, res) => {
 		return res.status(405).send({ "error" : `${ req.method } Method not allowed`});
 	}
 
-	var idToken = req.body.token;
+	var idToken = req.query.token;
 	if (!idToken || idToken === "") {
 		return res.status(400).send({ 'error' : 'No token given'});
 	}
@@ -190,12 +190,13 @@ exports.deleteuser = functions.https.onRequest((req, res) => {
 // --------------------DEV ENDPOINTS-------------------------
 // ----------------------------------------------------------
 exports.devgetuser = functions.https.onRequest((req, res) => {
-    if (!(DEVELOPER_KEY in req.body && USERNAME in req.query)) {
+
+    if (!(DEVELOPER_KEY in req.query && USERNAME in req.query)) {
         res.status(400).send({ 'error': 'No developer key or username given.' });
         return;
     }
 
-    var key = req.body.developerKey;
+    var key = req.query.developerKey;
     if (key !== dev_config) {
         return res.status(400).send({ 'error': "Invalid developer credentials." });
     } else {
