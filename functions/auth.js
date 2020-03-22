@@ -186,3 +186,27 @@ exports.signUp = functions.https.onRequest((req, res) => {
   	utils.handleServerError(res, err);
   });
 });
+
+exports.checkToken = functions.https.onRequest((req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+
+  if (req.method !== "GET") {
+    utils.handleBadRequest(res, "Must be a GET request.");
+    return;
+  }
+
+  if (!req.query.hasOwnProperty("idToken")) {
+    utils.handleBadRequest(res, "Missing idToken to verify.");
+    return;
+  }
+
+  let idToken = req.query.idToken;
+  fb.admin.auth().verifyIdToken(idToken).then(decodedToken => {
+    utils.handleSuccess(res, { idToken });
+  }).catch(err => {
+    utils.handleServerError(res, "Token is invalid or expired.");
+  });
+});
