@@ -3,6 +3,7 @@ const request = require('request');
 const CONSTS = require('./constants.js');
 const utils = require('./utils.js');
 const fb = require('./firebase.js');
+const profile = require('./profile.js');
 
 const api_key = "AIzaSyD7n8fuD2SJfiYi61fY7pY7abhpJeNC8ac";
 
@@ -22,6 +23,7 @@ const signInWithIdentityToolkit = (res, api_key, email, password) => {
       docRef.get().then(querySnapshot => {
         let doc = querySnapshot.docs[0];
         let docData = doc._fieldsProto;
+
         data["username"] = docData["username"]["stringValue"];
         data["is_student"] = docData["is_student"]["booleanValue"];
 
@@ -60,6 +62,16 @@ const createUserJson = (is_student=null, email=null, username=null, profileRef=n
 }
 
 exports.signIn = functions.https.onRequest((req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+
+  if (req.method === "OPTIONS") {
+    res.end();
+    return;
+  }
+
   if (req.method !== "POST") {
     utils.handleBadRequest(res, 'Must be a POST request.');
     return;
@@ -74,6 +86,16 @@ exports.signIn = functions.https.onRequest((req, res) => {
 });
 
 exports.signUp = functions.https.onRequest((req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+
+  if (req.method === "OPTIONS") {
+    res.end();
+    return;
+  }
+
   if (req.method !== "POST") {
     utils.handleBadRequest(res, 'Must be a POST request.');
     return;
@@ -92,70 +114,74 @@ exports.signUp = functions.https.onRequest((req, res) => {
   let docRef = fb.db.collection("users").where("username", "==", username).limit(1);
   // checking if user exists
   docRef.get().then(querySnapshot => {
-      if (!querySnapshot.empty) {
-        // overwriting existing user not allowed
-        utils.handleBadRequest(res, "User already exists.");
-        return;
+    if (!querySnapshot.empty) {
+      // overwriting existing user not allowed
+      utils.handleBadRequest(res, "User already exists.");
+      return;
+    }
+
+    fb.admin.auth().createUser({
+      email, password
+    }).then(userRecord => {
+
+      console.log("Created new user.");
+      let uid = userRecord.uid;
+      let userDocRef = fb.db.collection("users").doc(username);
+      let profileDocRef = fb.db.collection("profiles").doc(username);
+
+      let userJson = createUserJson(
+        req.body[CONSTS.IS_STUDENT],
+        req.body[CONSTS.EMAIL],
+        req.body[CONSTS.USERNAME],
+        profileDocRef,
+        []
+      );
+
+      // blank profile
+      let profileJson;
+      if (req.body[CONSTS.IS_STUDENT]) {
+        profileJson = {
+          [CONSTS.USERREF]: userDocRef,
+          [CONSTS.NAME]: "",
+          [CONSTS.ABOUT_ME]: "",
+          [CONSTS.GPA]: -1,
+          [CONSTS.MAJOR]: "",
+          [CONSTS.YEAR]: -1,
+          [CONSTS.COURSES]: null,
+          [CONSTS.INTERESTS]: null,
+          [CONSTS.EXP]: null,
+        };
+      } else {
+        profileJson = {
+          [CONSTS.USERREF]: userDocRef,
+          [CONSTS.NAME]: "",
+          [CONSTS.ABOUT_ME]: "",
+          [CONSTS.COURSES]: null,
+          [CONSTS.INTERESTS]: null,
+        }
       }
 
-      console.log("Creating new user.");
+      userDocRef.set(userJson).then(() => {
+        console.log("User document set.");
 
-      fb.admin.auth().createUser({
-        email, password
-      }).then(userRecord => {
-        let uid = userRecord.uid;
-        let userDocRef = fb.db.collection("users").doc(username);
-        let profileDocRef = fb.db.collection("profiles").doc(username);
+        profileDocRef.set(profileJson).then(() => {
+          console.log("Profile document set.");
 
-        let userJson = createUserJson(
-          req.body[CONSTS.IS_STUDENT],
-          req.body[CONSTS.EMAIL],
-          req.body[CONSTS.USERNAME],
-          profileDocRef,
-          []
-        );
+          console.log("Signing in after signing up.");
+          signInWithIdentityToolkit(res, api_key, email, password);
 
-        // blank profile
-        let profileJson;
-        if (req.body[CONSTS.IS_STUDENT]) {
-          profileJson = {
-            [CONSTS.USERREF]: userDocRef,
-            [CONSTS.NAME]: "",
-            [CONSTS.ABOUT_ME]: "",
-            [CONSTS.GPA]: -1,
-            [CONSTS.MAJOR]: "",
-            [CONSTS.YEAR]: -1,
-            [CONSTS.COURSES]: null,
-            [CONSTS.INTERESTS]: null,
-            [CONSTS.EXP]: null,
-          };
-        } else {
-          profileJson = {
-            [CONSTS.USERREF]: userDocRef,
-            [CONSTS.NAME]: "",
-            [CONSTS.ABOUT_ME]: "",
-            [CONSTS.COURSES]: null,
-            [CONSTS.INTERESTS]: null,
-          }
-        }
-
-        userDocRef.set(userJson).then(() => {
-          profileDocRef.set(profileJson).then(() => {
-            console.log("Signing in after signing up.");
-            signInWithIdentityToolkit(res, api_key, email, password);
-
-          }).catch(err => {
-            userDocRef.delete();
-            utils.handleServerError(res, err);
-          });
-          
         }).catch(err => {
+          userDocRef.delete();
           utils.handleServerError(res, err);
         });
 
       }).catch(err => {
         utils.handleServerError(res, err);
       });
+
+    }).catch(err => {
+      utils.handleServerError(res, err);
+    });
   }).catch(err => {
   	utils.handleServerError(res, err);
   });
