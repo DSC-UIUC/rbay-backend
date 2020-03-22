@@ -95,66 +95,68 @@ exports.signUp = functions.https.onRequest((req, res) => {
       if (!querySnapshot.empty) {
         // overwriting existing user not allowed
         utils.handleBadRequest(res, "User already exists.");
+        return;
       }
-  }).catch(err => {
-  	utils.handleServerError(res, err);
-  });
 
-  console.log("Creating new user.");
+      console.log("Creating new user.");
 
-  fb.admin.auth().createUser({
-    email, password
-  }).then(userRecord => {
-    let uid = userRecord.uid;
-    let userDocRef = fb.db.collection("users").doc(uid);
-    let profileDocRef = fb.db.collection("profiles").doc(uid);
+      fb.admin.auth().createUser({
+        email, password
+      }).then(userRecord => {
+        let uid = userRecord.uid;
+        let userDocRef = fb.db.collection("users").doc(username);
+        let profileDocRef = fb.db.collection("profiles").doc(username);
 
-    let userJson = createUserJson(
-      req.body[CONSTS.IS_STUDENT],
-      req.body[CONSTS.EMAIL],
-      req.body[CONSTS.USERNAME],
-      profileDocRef,
-      []
-    );
+        let userJson = createUserJson(
+          req.body[CONSTS.IS_STUDENT],
+          req.body[CONSTS.EMAIL],
+          req.body[CONSTS.USERNAME],
+          profileDocRef,
+          []
+        );
 
-    // blank profile
-    let profileJson;
-    if (req.body[CONSTS.IS_STUDENT]) {
-      profileJson = {
-        [CONSTS.USERREF]: userDocRef,
-        [CONSTS.NAME]: "",
-        [CONSTS.ABOUT_ME]: "",
-        [CONSTS.GPA]: -1,
-        [CONSTS.MAJOR]: "",
-        [CONSTS.YEAR]: -1,
-        [CONSTS.COURSES]: null,
-        [CONSTS.INTERESTS]: null,
-        [CONSTS.EXP]: null,
-      };
-    } else {
-      profileJson = {
-        [CONSTS.USERREF]: userDocRef,
-        [CONSTS.NAME]: "",
-        [CONSTS.ABOUT_ME]: "",
-        [CONSTS.COURSES]: null,
-        [CONSTS.INTERESTS]: null,
-      }
-    }
+        // blank profile
+        let profileJson;
+        if (req.body[CONSTS.IS_STUDENT]) {
+          profileJson = {
+            [CONSTS.USERREF]: userDocRef,
+            [CONSTS.NAME]: "",
+            [CONSTS.ABOUT_ME]: "",
+            [CONSTS.GPA]: -1,
+            [CONSTS.MAJOR]: "",
+            [CONSTS.YEAR]: -1,
+            [CONSTS.COURSES]: null,
+            [CONSTS.INTERESTS]: null,
+            [CONSTS.EXP]: null,
+          };
+        } else {
+          profileJson = {
+            [CONSTS.USERREF]: userDocRef,
+            [CONSTS.NAME]: "",
+            [CONSTS.ABOUT_ME]: "",
+            [CONSTS.COURSES]: null,
+            [CONSTS.INTERESTS]: null,
+          }
+        }
 
-    userDocRef.set(userJson).then(() => {
-      profileDocRef.set(profileJson).then(() => {
-        console.log("Signing in after signing up.");
-        signInWithIdentityToolkit(res, api_key, email, password);
+        userDocRef.set(userJson).then(() => {
+          profileDocRef.set(profileJson).then(() => {
+            console.log("Signing in after signing up.");
+            signInWithIdentityToolkit(res, api_key, email, password);
+
+          }).catch(err => {
+            userDocRef.delete();
+            utils.handleServerError(res, err);
+          });
+          
+        }).catch(err => {
+          utils.handleServerError(res, err);
+        });
 
       }).catch(err => {
-        userDocRef.delete();
         utils.handleServerError(res, err);
       });
-    }).catch(err => {
-      utils.handleServerError(res, err);
-    });
-    
   }).catch(err => {
-    utils.handleServerError(res, err);
+  	utils.handleServerError(res, err);
   });
 });
