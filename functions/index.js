@@ -6,3 +6,8 @@ exports.signUp = auth.signUp;
 exports.checkToken = auth.checkToken;
 
 exports.getProfile = profile.getProfile;
+// edit profile
+// create + edit postings
+// get recommendations
+// change password
+// delete user
