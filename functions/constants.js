@@ -8,6 +8,7 @@ exports.EXP = 'experience';
 exports.INTERESTS = 'research interests';
 exports.RESEARCH = 'research';
 
+exports.UID = 'uid';
 exports.PROFREF = 'profile';
 exports.USERREF = 'user';
 exports.POSTINGS = 'postings';
