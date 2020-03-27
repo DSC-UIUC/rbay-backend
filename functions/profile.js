@@ -11,43 +11,80 @@ exports.getProfile = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Headers', '*');
 
   if (req.method !== "GET") {
-    utils.handleBadRequest(res, "Must be a GET request.");
-    return;
+    return utils.handleBadRequest(res, "Must be a GET request.");
   }
 
   if (!req.query.hasOwnProperty("idToken")) {
-    utils.handleBadRequest(res, "Missing idToken.");
-    return;
+    return utils.handleBadRequest(res, "Missing idToken.");
   }
 
   let idToken = req.query.idToken;
   let decodedUid = await auth.verifyTokenWithAdmin(idToken);
   console.log(decodedUid);
   if (decodedUid == null) {
-    utils.handleBadRequest(res, "Token is invalid or expired.");
-    return;
+    return utils.handleBadRequest(res, "Token is invalid or expired.");
   }
 
   try {
     let userDocRef = fb.db.collection("users").doc(decodedUid);
     let userDoc = await userDocRef.get();
     if (!userDoc.exists) {
-      utils.handleServerError(res, "User does not exist.");
-      return;
+      return utils.handleServerError(res, "User does not exist.");
     }
 
     let profileDocRef = userDoc.data().profile;
     let profileDoc = await profileDocRef.get();
     if (!profileDoc.exists) {
-      utils.handleServerError(res, "Profile does not exist.");
-      return;
+      return utils.handleServerError(res, "Profile does not exist.");
     }
 
     let data = profileDoc.data();
     let { user, ...rest } = data;
 
-    utils.handleSuccess(res, rest);
+    return utils.handleSuccess(res, rest);
   } catch (err) {
-    utils.handleServerError(res, err);
+    return utils.handleServerError(res, err);
+  }
+});
+
+exports.setProfile = functions.https.onRequest(async (req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+
+  if (req.method === "OPTIONS") {
+    return res.end();
+  }
+
+  if (req.method !== "POST") {
+    return utils.handleBadRequest(res, 'Must be a POST request.');
+  }
+
+  if (!req.body.hasOwnProperty("idToken")) {
+    return utils.handleBadRequest(res, "Missing idToken.");
+  }
+
+  let { ...newProfileData, idToken } = req.body;
+  let decodedUid = await auth.verifyTokenWithAdmin(idToken);
+  console.log(decodedUid);
+  if (decodedUid == null) {
+    return utils.handleBadRequest(res, "Token is invalid or expired.");
+  }
+
+  try {
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      return utils.handleServerError(res, "User does not exist.");
+    }
+
+    let profileDocRef = userDoc.data().profile;
+    // TODO test
+    await profileDocRef.set(newProfileData, { merge: true });
+
+    return utils.handleSuccess(res, );
+  } catch (err) {
+    return utils.handleServerError(res, err);
   }
 });
