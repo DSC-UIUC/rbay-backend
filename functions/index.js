@@ -19,4 +19,3 @@ exports.getUserRecommendations = posting.getUserRecommendations;
 // create + edit postings
 // get recommendations
 // change password
-// delete user

@@ -197,42 +197,42 @@ exports.checkToken = functions.https.onRequest(async (req, res) => {
   }
 });
 
-// exports.changePassword = functions.https.onRequest(async (req, res) => {
-//   // for manually handling POST/OPTIONS CORS policy
-//   res.set('Access-Control-Allow-Origin', '*');
-//   res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
-//   res.set('Access-Control-Allow-Headers', '*');
+exports.changePassword = functions.https.onRequest(async (req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
 
-//   if (req.method === "OPTIONS") {
-//     return res.end();
-//   }
+  if (req.method === "OPTIONS") {
+    return res.end();
+  }
 
-//   if (req.method !== "POST") {
-//     return utils.handleBadRequest(res, 'Must be a POST request.');
-//   }
+  if (req.method !== "POST") {
+    return utils.handleBadRequest(res, 'Must be a POST request.');
+  }
 
-//   if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("password"))) {
-//     return utils.handleBadRequest(res, "Missing idToken or new password");
-//   }
+  if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("password"))) {
+    return utils.handleBadRequest(res, "Missing idToken or new password");
+  }
 
-//   let decodedUid = await auth.verifyTokenWithAdmin(req.query.idToken);
-//   console.log(decodedUid);
-//   if (decodedUid == null) {
-//     return utils.handleBadRequest(res, "Token is invalid or expired.");
-//   }
+  let decodedUid = await verifyTokenWithAdmin(req.body.idToken);
+  console.log(decodedUid);
+  if (decodedUid == null) {
+    return utils.handleBadRequest(res, "Token is invalid or expired.");
+  }
 
-//   try {
-//     let result = await fb.admin.auth().updateUser(decodedUid, {
-//       password: req.body.password,
-//     });
+  try {
+    let result = await fb.admin.auth().updateUser(decodedUid, {
+      password: req.body.password,
+    });
 
-//     console.log("Updated password for user.");  // TODO test
-//     return utils.handleSuccess(res, result);
+    console.log("Updated password for user.");  // TODO test
+    return utils.handleSuccess(res, "Password updated");
 
-//   } catch (err) {
-//     return utils.handleServerError(res, err);
-//   }
-// });
+  } catch (err) {
+    return utils.handleServerError(res, err);
+  }
+});
 
 exports.deleteUser = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
