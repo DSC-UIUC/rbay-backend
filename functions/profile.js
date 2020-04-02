@@ -47,6 +47,7 @@ exports.getProfile = functions.https.onRequest(async (req, res) => {
   }
 });
 
+// idtoken needs to be in body
 exports.setProfile = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
   res.set('Access-Control-Allow-Origin', '*');
@@ -65,9 +66,9 @@ exports.setProfile = functions.https.onRequest(async (req, res) => {
     return utils.handleBadRequest(res, "Missing idToken.");
   }
 
-  let { ...newProfileData, idToken } = req.body;
+  let { idToken, ...newProfileData } = req.body;
   let decodedUid = await auth.verifyTokenWithAdmin(idToken);
-  console.log(decodedUid);
+  // console.log(decodedUid);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
   }
@@ -80,11 +81,16 @@ exports.setProfile = functions.https.onRequest(async (req, res) => {
     }
 
     let profileDocRef = userDoc.data().profile;
-    // TODO test
-    await profileDocRef.set(newProfileData, { merge: true });
+    let verifiedData = utils.verifyFieldsProfile(userDoc.data().is_student, req.body);
 
-    return utils.handleSuccess(res, );
+    await profileDocRef.set(verifiedData, { merge: true });
+    let profileDoc = await profileDocRef.get();
+ 
+    let { user, ...rest } = profileDoc.data();
+
+    return utils.handleSuccess(res, rest);
   } catch (err) {
     return utils.handleServerError(res, err);
   }
+
 });

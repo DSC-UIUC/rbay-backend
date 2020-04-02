@@ -17,7 +17,7 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
   try {
     let response = await axios.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword", null, { params });
 
-    console.log(response);
+    // console.log(response);
 
     if (response.status !== 200) {
       return utils.handleBadRequest(res, "Invalid email or password.");
@@ -105,7 +105,7 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
       && req.body.hasOwnProperty(CONSTS.PASSWORD)
       && req.body.hasOwnProperty(CONSTS.IS_STUDENT)
       && req.body.hasOwnProperty(CONSTS.USERNAME))) {
-    return utils.handleBadRequest(res, "Missing required fields.");
+    return utils.handleBadRequest(res, "Missing required fields: email, password, is_student, or username");
   }
 
   let email = req.body.email;
@@ -142,19 +142,19 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.GPA]: -1,
-        [CONSTS.MAJOR]: "",
+        [CONSTS.MAJOR]: [],
         [CONSTS.YEAR]: -1,
-        [CONSTS.COURSES]: null,
-        [CONSTS.INTERESTS]: null,
-        [CONSTS.EXP]: null,
+        [CONSTS.COURSES]: {},
+        [CONSTS.INTERESTS]: [],
+        [CONSTS.EXP]: [],
       };
     } else {
       profileJson = {
         [CONSTS.USERREF]: userDocRef,
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
-        [CONSTS.COURSES]: null,
-        [CONSTS.INTERESTS]: null,
+        [CONSTS.INTERESTS]: [],
+        [CONSTS.DEPT]: ""
       }
     }
 
@@ -266,4 +266,4 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
   } catch (err) {
     return utils.handleServerError(res, err);
   }
-}
+})

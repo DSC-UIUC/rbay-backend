@@ -7,6 +7,7 @@ exports.YEAR = 'year';
 exports.EXP = 'experience';
 exports.INTERESTS = 'research interests';
 exports.RESEARCH = 'research';
+exports.DEPT = 'department';
 
 exports.UID = 'uid';
 exports.PROFREF = 'profile';
