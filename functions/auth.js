@@ -6,6 +6,8 @@ const fb = require('./firebase.js');
 
 const api_key = "AIzaSyD7n8fuD2SJfiYi61fY7pY7abhpJeNC8ac";
 
+
+// TODO display helpful error message when user doesnt exist
 const signInWithIdentityToolkit = async (res, api_key, email, password) => {
   let params = {
     key: api_key,
@@ -57,7 +59,7 @@ const createUserJson = (is_student=null, email=null, username=null, profileDocRe
 	return userDoc;
 }
 
-const verifyTokenWithAdmin = async (idToken) => {
+const verifyTokenWithAdmin = exports.verifyTokenWithAdmin = async (idToken) => {
   try {
     let decodedToken = await fb.admin.auth().verifyIdToken(idToken);
     return decodedToken.uid;
@@ -170,8 +172,6 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
   }
 });
 
-exports.verifyTokenWithAdmin = verifyTokenWithAdmin;
-
 exports.checkToken = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
   res.set('Access-Control-Allow-Origin', '*');
@@ -196,42 +196,42 @@ exports.checkToken = functions.https.onRequest(async (req, res) => {
   }
 });
 
-exports.changePassword = functions.https.onRequest(async (req, res) => {
-  // for manually handling POST/OPTIONS CORS policy
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', '*');
+// exports.changePassword = functions.https.onRequest(async (req, res) => {
+//   // for manually handling POST/OPTIONS CORS policy
+//   res.set('Access-Control-Allow-Origin', '*');
+//   res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+//   res.set('Access-Control-Allow-Headers', '*');
 
-  if (req.method === "OPTIONS") {
-    return res.end();
-  }
+//   if (req.method === "OPTIONS") {
+//     return res.end();
+//   }
 
-  if (req.method !== "POST") {
-    return utils.handleBadRequest(res, 'Must be a POST request.');
-  }
+//   if (req.method !== "POST") {
+//     return utils.handleBadRequest(res, 'Must be a POST request.');
+//   }
 
-  if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("password"))) {
-    return utils.handleBadRequest(res, "Missing idToken or new password");
-  }
+//   if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("password"))) {
+//     return utils.handleBadRequest(res, "Missing idToken or new password");
+//   }
 
-  let decodedUid = await auth.verifyTokenWithAdmin(req.query.idToken);
-  console.log(decodedUid);
-  if (decodedUid == null) {
-    return utils.handleBadRequest(res, "Token is invalid or expired.");
-  }
+//   let decodedUid = await auth.verifyTokenWithAdmin(req.query.idToken);
+//   console.log(decodedUid);
+//   if (decodedUid == null) {
+//     return utils.handleBadRequest(res, "Token is invalid or expired.");
+//   }
 
-  try {
-    let result = await fb.admin.auth().updateUser(decodedUid, {
-      password: req.body.password,
-    });
+//   try {
+//     let result = await fb.admin.auth().updateUser(decodedUid, {
+//       password: req.body.password,
+//     });
 
-    console.log("Updated password for user.");  // TODO test
-    return utils.handleSuccess(res, result);
+//     console.log("Updated password for user.");  // TODO test
+//     return utils.handleSuccess(res, result);
 
-  } catch (err) {
-    return utils.handleServerError(res, err);
-  }
-});
+//   } catch (err) {
+//     return utils.handleServerError(res, err);
+//   }
+// });
 
 exports.deleteUser = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
@@ -248,10 +248,10 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
   }
 
   if (!(req.body.hasOwnProperty("idToken"))) {
-    return utils.handleBadRequest(res, "Missing idToken.");
+    return utils.handleBadRequest(res, "Missing idToken in body.");
   }
 
-  let decodedUid = await auth.verifyTokenWithAdmin(req.query.idToken);
+  let decodedUid = await verifyTokenWithAdmin(req.body.idToken);
   console.log(decodedUid);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
@@ -260,10 +260,18 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
   try {
     let result = await fb.admin.auth().deleteUser(decodedUid);
 
-    console.log("Deleted user."); // TODO test
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    let profileDocRef = userDoc.data().profile;
+
+    userDocRef.delete();
+    profileDocRef.delete();
+
+    console.log("Deleted user.");
     return utils.handleSuccess(res, result);
 
   } catch (err) {
     return utils.handleServerError(res, err);
   }
-})
+
+});
