@@ -7,7 +7,6 @@ const fb = require('./firebase.js');
 const api_key = "AIzaSyD7n8fuD2SJfiYi61fY7pY7abhpJeNC8ac";
 
 
-// TODO display helpful error message when user doesnt exist
 const signInWithIdentityToolkit = async (res, api_key, email, password) => {
   let params = {
     key: api_key,
@@ -18,8 +17,6 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
   try {
     let response = await axios.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword", null, { params });
-
-    // console.log(response);
 
     if (response.status !== 200) {
       return utils.handleBadRequest(res, "Invalid email or password.");
@@ -37,7 +34,11 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
     return utils.handleSuccess(res, data);
   } catch (err) {
-    return utils.handleServerError(res, err);
+    if (err.isAxiosError) {
+      return utils.handleBadRequest(res, "Invalid email or password");
+    } else {
+      return utils.handleServerError(res, err);
+    }
   }
 }
 
