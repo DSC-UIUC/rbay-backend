@@ -68,8 +68,8 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
     // Find document to be updated.
     let postingDocRef = fb.db.collection("postings").doc(req.query["postingId"]);
     let postingDoc = await postingDocRef.get();
-    let linkedProfessorDocRef = fb.db.collection("users")
-        .doc(postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"]);
+    let postingProfRefValue = postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"]
+    let linkedProfessorDocRef = fb.db.collection("users").doc(postingProfRefValue);
 
     // Check to make sure user is correct.
     if (linkedProfessorDocRef.id !== userDocRef.id) {

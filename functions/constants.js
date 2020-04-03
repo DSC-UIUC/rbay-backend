@@ -26,3 +26,4 @@ exports.DESCRIPTION = 'description';
 exports.REQUIREMENTS = 'requirements';
 exports.TAGS = 'tags';
 exports.PROFESSOR = 'professor';
+exports.POSTINGID = 'postingId';
