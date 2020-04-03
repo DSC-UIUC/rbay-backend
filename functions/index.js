@@ -15,6 +15,7 @@ exports.setProfile = profile.setProfile;
 exports.getUserPostings = posting.getUserPostings;
 exports.getUserRecommendations = posting.getUserRecommendations;
 exports.createPosting = posting.createPosting;
+exports.updatePosting = posting.updatePosting;
 
 
 // create + edit postings

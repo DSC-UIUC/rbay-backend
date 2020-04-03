@@ -24,11 +24,86 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
   }
 }
 
+exports.updatePosting = functions.https.onRequest(async (req, res) => {
+    // for manually handling POST/OPTIONS CORS policy
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', '*');
+
+    // Validity checking.
+    if (req.method !== "POST") {
+        utils.handleBadRequest(res, "Must be a POST request.");
+        return;
+    }
+
+    if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
+        utils.handleBadRequest(res, "Missing idToken or postingId.");
+        return;
+    }
+
+    if (!req.body.hasOwnProperty(CONSTS.DESCRIPTION) ||
+        !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
+        !req.body.hasOwnProperty(CONSTS.TITLE) ||
+        !req.body.hasOwnProperty(CONSTS.TAGS)) {
+        utils.handleBadRequest(res, "Missing title, lab name, or description, or tags.");
+        return;
+    }
+
+    let idToken = req.query.idToken;
+    let decodedUid = await auth.verifyTokenWithAdmin(idToken);
+    console.log(decodedUid);
+    if (decodedUid == null) {
+        utils.handleBadRequest(res, "Token is invalid or expired.");
+        return;
+    }
+
+    // Find user updating posting.
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+        utils.handleServerError(res, "User does not exist.");
+        return;
+    }
+
+    // Find document to be updated.
+    let postingDocRef = fb.db.collection("postings").doc(req.query["postingId"]);
+    let postingDoc = await postingDocRef.get();
+    let linkedProfessorDocRef = fb.db.collection("users")
+        .doc(postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"]);
+
+    // Check to make sure user is correct.
+    if (linkedProfessorDocRef.id !== userDocRef.id) {
+        utils.handleBadRequest(res, "Only the original poster can only modify their postings.");
+        return;
+    }
+
+    // Constructing posting document.
+    let postingJson = {
+        [CONSTS.TITLE]: req.body[CONSTS.TITLE],
+        [CONSTS.LAB_NAME]: req.body[CONSTS.LAB_NAME],
+        [CONSTS.PROFESSOR]: userDocRef,
+        [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
+        [CONSTS.TAGS]: req.body[CONSTS.TAGS]
+    }
+
+    let requirements = {};
+    if (req.body.hasOwnProperty(CONSTS.REQUIREMENTS)) {
+        requirements = req.body[CONSTS.REQUIREMENTS];
+    }
+
+    // Updating posting document.
+    postingJson[CONSTS.REQUIREMENTS] = requirements;
+    postingDocRef.set(postingJson);
+    utils.handleSuccess(res, { "id": postingDocRef.id })
+    return;
+});
+
 exports.createPosting = functions.https.onRequest(async (req, res) => {
     // for manually handling POST/OPTIONS CORS policy
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
+
 
     // Validity checking.
     if (req.method !== "POST") {
