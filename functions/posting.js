@@ -11,7 +11,8 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
     for (let postingRef of postingsRefArray) {
       let postingDoc = await postingRef.get();
       if (postingDoc.exists) {
-        data.push(postingDoc.data());
+        let { professor, ...postData } = postingDoc.data();
+        data.push(postData);
       }
     }
 
