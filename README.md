@@ -195,6 +195,7 @@ For student user:
   "name": [string],
   "research interests": [string array],
   "coursework": [string array],
+  "skills": [string array],
   "experience": [
     {
       "title": [string],
