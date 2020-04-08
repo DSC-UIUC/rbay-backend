@@ -2,11 +2,11 @@
 
 // TODO about this project as a whole
 
-## Backend
+## About Backend
 
 This repository contains the code and documentation for Research Bay's Backend API, which handles all HTTP endpoints required to successfully run all user authentication, data, and actions for the Research Bay website (Frontend). This API was built on REST and Serverless principles and can function independently from any frontend interface. Thus, future expansions, such as a mobile app or additional GCP resources, may easily be integrated into this project. This REST API is implemented using Firebase's Authentication, Firestore, Storage, and Cloud Functions services in JavaScript (Node.js).
 
-### Team
+### Backend Team
 
 The Research Bay project was built by student developers in Developer Student Club at the University of Illinois at Urbana-Champaign (DSC @ UIUC). DSC @ UIUC is an official branch of Google Developers' global Developer Student Club program. Specifically, this backend API was built by the following students in the DSC's 2019-2020 membership:
 
@@ -47,7 +47,7 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 
 ---
 
-#### Success and Error API responses
+### Success and Error API responses
 
 
 For all endpoints, the API returns a response with status code with 200 on successful invocations with a `messsage` and `data` field in the response body (JSON) as shown below:
@@ -74,7 +74,7 @@ Given the information above, this API documentation only contains the format of 
 ---
 
 <a name="auth" id="auth"></a>
-#### Authentication
+### Authentication
 
 <br />
 
@@ -168,7 +168,7 @@ The returned valid `idToken` is not refreshed by Firebase Auth and will still ex
 ---
 
 <a name="profile" id="profile"></a>
-#### Profile
+### Profile
 
 <br />
 
@@ -225,7 +225,7 @@ For professor user:
 ---
 
 <a name="posting" id="posting"></a>
-#### Posting
+### Posting
 
 <br />
 
