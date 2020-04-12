@@ -248,11 +248,11 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
     return utils.handleBadRequest(res, 'Must be a DELETE request.');
   }
 
-  if (!(req.body.hasOwnProperty("idToken"))) {
-    return utils.handleBadRequest(res, "Missing idToken in body.");
+  if (!(req.query.hasOwnProperty("idToken"))) {
+    return utils.handleBadRequest(res, "Missing idToken in query.");
   }
 
-  let decodedUid = await verifyTokenWithAdmin(req.body.idToken);
+  let decodedUid = await verifyTokenWithAdmin(req.query.idToken);
   console.log(decodedUid);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
