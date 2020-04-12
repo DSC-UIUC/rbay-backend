@@ -4,7 +4,8 @@ const CONSTS = require('./constants.js');
 const utils = require('./utils.js');
 const fb = require('./firebase.js');
 
-const api_key = "AIzaSyD7n8fuD2SJfiYi61fY7pY7abhpJeNC8ac";
+const api_key = functions.config().api.key;
+
 
 const signInWithIdentityToolkit = async (res, api_key, email, password) => {
   let params = {
@@ -16,8 +17,6 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
   try {
     let response = await axios.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword", null, { params });
-
-    console.log(response);
 
     if (response.status !== 200) {
       return utils.handleBadRequest(res, "Invalid email or password.");
@@ -35,7 +34,11 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
     return utils.handleSuccess(res, data);
   } catch (err) {
-    return utils.handleServerError(res, err);
+    if (err.isAxiosError) {
+      return utils.handleBadRequest(res, "Invalid email or password");
+    } else {
+      return utils.handleServerError(res, err);
+    }
   }
 }
 
@@ -57,7 +60,7 @@ const createUserJson = (is_student=null, email=null, username=null, profileDocRe
 	return userDoc;
 }
 
-const verifyTokenWithAdmin = async (idToken) => {
+const verifyTokenWithAdmin = exports.verifyTokenWithAdmin = async (idToken) => {
   try {
     let decodedToken = await fb.admin.auth().verifyIdToken(idToken);
     return decodedToken.uid;
@@ -105,7 +108,7 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
       && req.body.hasOwnProperty(CONSTS.PASSWORD)
       && req.body.hasOwnProperty(CONSTS.IS_STUDENT)
       && req.body.hasOwnProperty(CONSTS.USERNAME))) {
-    return utils.handleBadRequest(res, "Missing required fields.");
+    return utils.handleBadRequest(res, "Missing required fields: email, password, is_student, or username");
   }
 
   let email = req.body.email;
@@ -142,19 +145,19 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.GPA]: -1,
-        [CONSTS.MAJOR]: "",
+        [CONSTS.MAJOR]: [],
         [CONSTS.YEAR]: -1,
-        [CONSTS.COURSES]: null,
-        [CONSTS.INTERESTS]: null,
-        [CONSTS.EXP]: null,
+        [CONSTS.COURSES]: {},
+        [CONSTS.INTERESTS]: [],
+        [CONSTS.EXP]: [],
       };
     } else {
       profileJson = {
         [CONSTS.USERREF]: userDocRef,
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
-        [CONSTS.COURSES]: null,
-        [CONSTS.INTERESTS]: null,
+        [CONSTS.INTERESTS]: [],
+        [CONSTS.DEPT]: ""
       }
     }
 
@@ -169,8 +172,6 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
     utils.handleServerError(res, err);
   }
 });
-
-exports.verifyTokenWithAdmin = verifyTokenWithAdmin;
 
 exports.checkToken = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
@@ -214,7 +215,7 @@ exports.changePassword = functions.https.onRequest(async (req, res) => {
     return utils.handleBadRequest(res, "Missing idToken or new password");
   }
 
-  let decodedUid = await auth.verifyTokenWithAdmin(req.query.idToken);
+  let decodedUid = await verifyTokenWithAdmin(req.body.idToken);
   console.log(decodedUid);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
@@ -226,7 +227,7 @@ exports.changePassword = functions.https.onRequest(async (req, res) => {
     });
 
     console.log("Updated password for user.");  // TODO test
-    return utils.handleSuccess(res, result);
+    return utils.handleSuccess(res, "Password updated");
 
   } catch (err) {
     return utils.handleServerError(res, err);
@@ -248,10 +249,10 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
   }
 
   if (!(req.body.hasOwnProperty("idToken"))) {
-    return utils.handleBadRequest(res, "Missing idToken.");
+    return utils.handleBadRequest(res, "Missing idToken in body.");
   }
 
-  let decodedUid = await auth.verifyTokenWithAdmin(req.query.idToken);
+  let decodedUid = await verifyTokenWithAdmin(req.body.idToken);
   console.log(decodedUid);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
@@ -260,10 +261,18 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
   try {
     let result = await fb.admin.auth().deleteUser(decodedUid);
 
-    console.log("Deleted user."); // TODO test
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    let profileDocRef = userDoc.data().profile;
+
+    userDocRef.delete();
+    profileDocRef.delete();
+
+    console.log("Deleted user.");
     return utils.handleSuccess(res, result);
 
   } catch (err) {
     return utils.handleServerError(res, err);
   }
-}
+
+});
