@@ -10,6 +10,7 @@ exports.signUp = auth.signUp;
 exports.checkToken = auth.checkToken;
 
 exports.getProfile = profile.getProfile;
+exports.getProfileById = profile.getProfileById
 exports.setProfile = profile.setProfile;
 
 exports.getUserPostings = posting.getUserPostings;
