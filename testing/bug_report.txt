@@ -8,3 +8,7 @@
 
 4.	<h1>Error: Forbidden</h1>
 	<h2>Your client does not have permission to get URL <code>/setProfile</code> from this server.</h2>
+
+5.	For setProfile, major and gpa don't update
+
+6. getProfile doesn't work for some reason
