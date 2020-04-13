@@ -4,7 +4,7 @@ const CONSTS = require('./constants.js');
 const utils = require('./utils.js');
 const fb = require('./firebase.js');
 
-const api_key = "AIzaSyD7n8fuD2SJfiYi61fY7pY7abhpJeNC8ac";
+const api_key = functions.config().api.key;
 
 
 const signInWithIdentityToolkit = async (res, api_key, email, password) => {

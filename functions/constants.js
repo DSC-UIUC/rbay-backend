@@ -19,3 +19,12 @@ exports.IS_STUDENT = 'is_student';
 exports.EMAIL = 'email';
 exports.USERNAME = 'username';
 exports.PASSWORD = 'password';
+
+exports.TITLE = 'title';
+exports.LAB_NAME = 'lab_name';
+exports.DESCRIPTION = 'description';
+exports.REQUIREMENTS = 'requirements';
+exports.TAGS = 'tags';
+exports.PROFESSOR = 'professor';
+exports.APPLICANTS = 'applicants';
+exports.IS_OPEN = 'is_open';

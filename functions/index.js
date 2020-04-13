@@ -16,6 +16,8 @@ exports.setProfile = profile.setProfile;
 exports.getUserPostings = posting.getUserPostings;
 exports.getUserRecommendations = posting.getUserRecommendations;
 
-// create + edit postings
-// get recommendations
-// change password
+exports.createPosting = posting.createPosting;
+exports.updatePosting = posting.updatePosting;
+exports.deletePosting = posting.deletePosting;
+exports.getPostingById = posting.getPostingById;
+exports.applyToPosting = posting.applyToPosting;
