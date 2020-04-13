@@ -37,10 +37,12 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 
 [Profile](#profile)
 - [/getProfile](#getprofile)
+- [/getProfileById](#getprofilebyid)
 - [/setProfile](#setprofile)
 
 [Posting](#posting)
 - [/getUserPostings](#getuserpostings)
+- [/selectApplicantForPosting](#selectapplicantforposting)
 - [/getUserRecommendations](#getuserrecommendations)
 
 // TODO add more
@@ -230,6 +232,51 @@ For professor user:
 }
 ```
 
+<a name="getprofilebyid" id="getprofilebyid"></a>
+**GET /getProfileById**
+
+Retrieves all stored profile data for an existing user using a given `uid`. If `uid` is invalid, this call fails. The fields in the returned data depends on whether the user is a student or professor.
+
+Request Query (URL encoded parameters):
+```
+/getProfile?uid=[string]
+```
+
+`uid` is required.
+
+Response Body `data` (200):
+
+For student user:
+```
+"data": {
+  "aboutme" : [string],
+  "gpa": [float],
+  "major": [string],
+  "name": [string],
+  "research interests": [string array],
+  "coursework": [string array],
+  "skills": [string array],
+  "experience": [
+    {
+      "title": [string],
+      "company": [string],
+      "description": [string]
+    },
+    {...}
+  ]
+}
+```
+
+For professor user:
+```
+"data": {
+  "aboutme" : [string],
+  "name": [string],
+  "coursework": [string array],
+  "research interests": [string array]
+}
+```
+
 
 <a name="setprofile" id="setprofile"></a>
 **POST /setProfile**
@@ -300,6 +347,20 @@ Response Body `data` (200):
 ]
 ```
 
+<a name="selectapplicantforposting" id="selectapplicantforposting"></a>
+**POST /selectApplicantForPosting**
+
+Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting
+
+Request Body (JSON):
+
+```
+{
+  "idToken" : [string],
+  "postingId" : [string],
+  "applicant" : [string array]
+}
+```
 
 <a name="getuserrecommendations" id="getuserrecommendations"></a>
 **GET /getUserRecommendations**
@@ -309,3 +370,5 @@ Response Body `data` (200):
 ---
 
 // TODO add more
+
+
