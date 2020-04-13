@@ -407,7 +407,17 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
     }
 
     // checking to see if posting is still open
+    let postingDocRef = fb.db.collection("postings").doc(postingId);
+    let postingDoc = await postingDocRef.get();
+    if (!postingDoc.exists) {
+        utils.handleServerError(res, "Posting does not exist.");
+        return;
+    }
+    if (!postingDoc[CONSTS.IS_OPEN]) {
+      utils.handleServerError(res, "Posting is already closed");
+    }
 
+    // postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(userDocRef) });
 
 
   } catch(err) {
