@@ -98,6 +98,59 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
     return;
 });
 
+exports.deletePosting = functions.https.onRequest(async (req, res) => {
+    // for manually handling POST/OPTIONS CORS policy
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', '*');
+
+    if (req.method !== "DELETE") {
+        return utils.handleBadRequest(res, 'Must be a DELETE request.');
+    }
+
+    if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
+        utils.handleBadRequest(res, "Missing idToken or postingId.");
+        return;
+    }
+
+    let idToken = req.query.idToken;
+    let decodedUid = await auth.verifyTokenWithAdmin(idToken);
+    console.log(decodedUid);
+    if (decodedUid == null) {
+        utils.handleBadRequest(res, "Token is invalid or expired.");
+        return;
+    }
+
+    // Find user deleting posting.
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+        utils.handleServerError(res, "User does not exist.");
+        return;
+    }
+
+    // Find document to be deleted.
+    let postingDocRef = fb.db.collection("postings").doc(req.query["postingId"]);
+    let postingDoc = await postingDocRef.get();
+    if (!postingDoc.exists) {
+        utils.handleServerError(res, "Posting does not exist.");
+        return;
+    }
+
+    let postingProfRefValue = postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"]
+    let linkedProfessorDocRef = fb.db.collection("users").doc(postingProfRefValue);
+
+    // Check to make sure user is correct.
+    if (linkedProfessorDocRef.id !== userDocRef.id) {
+        utils.handleBadRequest(res, "Only the original poster can only delete their postings.");
+        return;
+    }
+
+    postingDocRef.delete();
+    console.log("Deleted posting.");
+    return utils.handleSuccess(res, {'Success' : 'Deleted posting.'});
+});
+
 exports.createPosting = functions.https.onRequest(async (req, res) => {
     // for manually handling POST/OPTIONS CORS policy
     res.set('Access-Control-Allow-Origin', '*');
