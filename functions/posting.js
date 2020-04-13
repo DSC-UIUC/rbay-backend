@@ -64,6 +64,62 @@ exports.getUserPostings = functions.https.onRequest(async (req, res) => {
   }
 });
 
+
+exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+
+  if (req.method !== "POST") {
+    return utils.handleBadRequest(res, "Must be a POST request.");
+  }
+
+  if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("postingId"))) {
+    return utils.handleBadRequest(res, "Missing idToken or postingId.");
+  }
+
+  let postingId = req.body.postingId;
+  let idToken = req.body.idToken;
+  let decodedUid = await auth.verifyTokenWithAdmin(idToken);
+
+  if (decodedUid == null) {
+    return utils.handleBadRequest(res, "Token is invalid or expired.");
+  }
+
+  try {
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    let userDocData = await userDoc.data();
+
+    if (!userDoc.exists) {
+      utils.handleServerError(res, "User does not exist.");
+      return;
+    }
+
+    // only allowing professors to select applicants
+    if (userDocData[CONSTS.IS_STUDENT]) {
+      utils.handleBadRequest(res, "Only professors can select applicants.");
+      return;
+    }
+
+    // checking to see if posting is in professors posting list
+    if (!(postingId in userDocData[CONSTS.POSTINGS])) {
+      utils.handleBadRequest(res, "Given professor did not create given posting");
+      return;
+    }
+
+    // checking to see if posting is still open
+
+
+
+  } catch(err) {
+    utils.handleServerError(res, err);
+  }
+});
+
+
+
 exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
   res.set('Access-Control-Allow-Origin', '*');
