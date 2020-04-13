@@ -17,4 +17,4 @@ exports.getUserRecommendations = posting.getUserRecommendations;
 exports.createPosting = posting.createPosting;
 exports.updatePosting = posting.updatePosting;
 exports.deletePosting = posting.deletePosting;
-
+exports.getPostingById = posting.getPostingById;

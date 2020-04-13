@@ -98,6 +98,43 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
     return;
 });
 
+exports.getPostingById = functions.https.onRequest(async (req, res) => {
+    // for manually handling POST/OPTIONS CORS policy
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', '*');
+
+    if (req.method !== "GET") {
+        return utils.handleBadRequest(res, 'Must be a GET request.');
+    }
+
+    if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
+        utils.handleBadRequest(res, "Missing idToken or postingId.");
+        return;
+    }
+
+    let idToken = req.query.idToken;
+    let decodedUid = await auth.verifyTokenWithAdmin(idToken);
+    console.log(decodedUid);
+    if (decodedUid == null) {
+        utils.handleBadRequest(res, "Token is invalid or expired.");
+        return;
+    }
+
+    let postingDocRef = fb.db.collection("postings").doc(req.query["postingId"]);
+    let postingDoc = await postingDocRef.get();
+    if (!postingDoc.exists) {
+        utils.handleServerError(res, "Posting does not exist.");
+        return;
+    }
+
+    let responseBody = postingDoc.data();
+    let postingProfRefValue = postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"]
+    let linkedProfessorDocRef = fb.db.collection("users").doc(postingProfRefValue);
+    responseBody[CONSTS.PROFESSOR] = linkedProfessorDocRef.id;
+    utils.handleSuccess(res, responseBody);
+});
+
 exports.deletePosting = functions.https.onRequest(async (req, res) => {
     // for manually handling POST/OPTIONS CORS policy
     res.set('Access-Control-Allow-Origin', '*');
