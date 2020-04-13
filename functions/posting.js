@@ -169,6 +169,7 @@ exports.getPostingById = functions.https.onRequest(async (req, res) => {
         return utils.handleBadRequest(res, 'Must be a GET request.');
     }
 
+    
     if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
         return;
@@ -189,7 +190,16 @@ exports.getPostingById = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    utils.handleSuccess(res, postingDoc.data());
+    let responseBody = postingDoc.data();
+    let postingProfRefValue = postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"];
+    let linkedProfessorDocRef = fb.db.collection("users").doc(postingProfRefValue);
+
+    // Remove applicant list if original poster is not the one making the request.
+    if (linkedProfessorDocRef.id !== decodedUid) {
+        delete responseBody[CONSTS.APPLICANTS];
+    }
+
+    utils.handleSuccess(res, responseBody);
 });
 
 exports.deletePosting = functions.https.onRequest(async (req, res) => {
