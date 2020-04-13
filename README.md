@@ -158,12 +158,25 @@ The returned valid `idToken` is not refreshed by Firebase Auth and will still ex
 <a name="changepassword" id="changepassword"></a>
 **POST /changePassword**
 
-// TODO please follow the exact format of the docs above
+Changes the password for the current user using their valid `idToken`. If `idToken` is invalid or expired, this call fails. If a given password is invalid, this endpoint will return a helpful error message about it (i.e. The password must be a string with at least 6 characters).
+
+Request Body (JSON):
+```
+{
+  "idToken" : [string],
+  "password" : [string]
+}
+```
 
 <a name="deleteuser" id="deleteuser"></a>
 **DELETE /deleteUser**
 
-// TODO please follow the exact format of the docs above
+Deletes the current user using their valid `idToken`. If `idToken` is invalid or expired, this call fails. This endpoint will delete all the user's information that is correctly stored.
+
+Request Query (URL encoded parameters):
+```
+/deleteProfile?idToken=[string]
+```
 
 ---
 
@@ -221,7 +234,44 @@ For professor user:
 <a name="setprofile" id="setprofile"></a>
 **POST /setProfile**
 
-// TODO please follow the exact format of the docs above
+Updates the current user's profile with the given profile data using their valid `idToken`. If `idToken` is invalid or expired, this call fails. The parameters that will be updated depend on whether the user is a student or a professor. On sucess, this endpoint will return the updated profile in the same format as [/getProfile](#getprofile) endpoint.
+
+Each profile parameter will be optional in the request body
+
+Request Body (JSON):
+```
+{
+  "idToken" : [string],
+  profileFields...
+}
+```
+For student user:
+```
+  "aboutme" : [string],
+  "gpa": [float],
+  "major": [string],
+  "name": [string],
+  "research interests": [string array],
+  "coursework": [string array],
+  "skills": [string array],
+  "experience": [
+    {
+      "title": [string],
+      "company": [string],
+      "description": [string]
+    },
+    {...}
+  ]
+```
+
+For professor user:
+```
+  "aboutme" : [string],
+  "name": [string],
+  "coursework": [string array],
+  "research interests": [string array]
+```
+
 
 ---
 
@@ -233,7 +283,23 @@ For professor user:
 <a name="getuserpostings" id="getuserpostings"></a>
 **GET /getUserPostings**
 
-// TODO please follow the exact format of the docs above
+Retrieves all the postings that a current user has created or applied to using their valid `idToken`. If `idToken` is invalid or expired, this call fails.
+
+Request Query (URL encoded parameters):
+```
+/getUserPostings?idToken=[string]
+```
+
+`idToken` is required.
+
+Response Body `data` (200):
+
+```
+"data" : [
+   
+]
+```
+
 
 <a name="getuserrecommendations" id="getuserrecommendations"></a>
 **GET /getUserRecommendations**
