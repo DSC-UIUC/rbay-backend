@@ -277,7 +277,6 @@ For professor user:
 }
 ```
 
-
 <a name="setprofile" id="setprofile"></a>
 **POST /setProfile**
 
@@ -342,6 +341,88 @@ Request Query (URL encoded parameters):
 Response Body `data` (200):
 
 ```
+"data" : {
+        "id": [string]
+    }
+```
+
+
+<a name="getuserrecommendations" id="getuserrecommendations"></a>
+**GET /getUserRecommendations**
+
+// TODO please follow the exact format of the docs above
+
+<a name="createPosting" id="createPosting"></a>
+**POST /createPosting**
+
+Creates a posting. Can only be used by users with professor status.
+
+Request Query (URL encoded parameters):
+```
+/getUserPostings?idToken=[string]
+```
+
+`idToken` is required.
+
+Response Body `data` (200):
+
+```
+"data" : {
+        "id": [string]
+    }
+```
+
+Request body (JSON):
+```
+{
+  "tags": [array of strings],
+  "title": [string],
+  "lab_name": [string],
+  "description": [string],
+  "requirements": {
+    "gpa": [float],
+    "year": [string],
+    "major": [array of strings],
+    "coursework": [array of strings]
+  }
+}
+```
+
+`Title`, `tags`, `description`, and `lab_name` are required.
+
+<a name="deletePosting" id="deletePosting"></a>
+**DELETE /deletePosting**
+
+Deletes posting. Only the user that created a given posting can delete it.
+
+Request Query (URL encoded parameters):
+```
+/getUserPostings?idToken=[string]&postingId=[string]
+```
+
+`idToken` and `postingId` are required.
+
+Response Body `data` (200):
+
+```
+"data" : {
+        "Success": [string]
+    }
+```
+
+<a name="updatePosting" id="updatePosting"></a>
+
+**POST /updatePosting**
+
+Changes posting to contain values that are in the request body. Users can only update their own postings.
+
+Request Query (URL encoded parameters):
+```
+/getUserPostings?idToken=[string]&postingId=[string]
+```
+
+`idToken` and `postingId` are required.
+=======
 "data" : [
    
 ]
@@ -356,6 +437,85 @@ Request Body (JSON):
 
 ```
 {
+  "tags": [array of strings],
+  "title": [string],
+  "lab_name": [string],
+  "description": [string],
+  "requirements": {
+    "gpa": [float],
+    "year": [string],
+    "major": [array of strings],
+    "coursework": [array of strings]
+  },
+  "applicants" : [array of strings],
+  "is_open": [boolean]
+}
+```
+All fields are required.
+
+Response Body `data` (200):
+
+```
+"data" : {
+        "id": [string]
+    }
+```
+
+<a name="applyToPosting" id="applyToPosting"></a>
+
+**POST /applyToPosting**
+
+Adds student to list of applicants for a posting. Returns bad request if student has already applied to posting. Only students can apply to postings.
+
+Request Query (URL encoded parameters):
+```
+/applyToPosting?idToken=[string]&postingId=[string]
+```
+
+`idToken` and `postingId` are required.
+
+Response Body `data` (200):
+
+```
+"data" : {
+        "Success": [string]
+    }
+```
+
+<a name="getPostingById" id="getPostingById"></a>
+**GET /getPostingById**
+
+Retrieves posting. If the user making this request is different from the original poster, the response body will not contain the list of applicants.
+
+Request Query (URL encoded parameters):
+```
+/getPostingById?idToken=[string]&postingId=[string]
+```
+
+`idToken` and `postingId` are required.
+
+Response Body `data` (200):
+
+```
+"data" : {
+    "requirements": {
+        "gpa": [float],
+        "year": [string],
+        "major": [array of strings],
+        "coursework": [array of strings]
+    },
+    "professor": [reference],
+    "tags": [array of strings],
+    "title": [string],
+    "lab_name": [string],
+    "description": [string],
+    "applicants" : [array of references (only appears if original poster is one making request)]
+}
+```
+
+---
+// TODO add more
+=======
   "idToken" : [string],
   "postingId" : [string],
   "applicant" : [string array]
@@ -370,5 +530,4 @@ Request Body (JSON):
 ---
 
 // TODO add more
-
 

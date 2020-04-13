@@ -16,8 +16,6 @@ exports.getUserPostings = posting.getUserPostings;
 exports.getUserRecommendations = posting.getUserRecommendations;
 exports.createPosting = posting.createPosting;
 exports.updatePosting = posting.updatePosting;
-
-
-// create + edit postings
-// get recommendations
-// change password
+exports.deletePosting = posting.deletePosting;
+exports.getPostingById = posting.getPostingById;
+exports.applyToPosting = posting.applyToPosting;
