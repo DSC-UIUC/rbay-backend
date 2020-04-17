@@ -204,11 +204,11 @@ Response Body `data` (200):
 For student user:
 ```
 "data": {
-  "aboutme" : [string],
+  "about_me" : [string],
   "gpa": [float],
   "major": [string],
   "name": [string],
-  "research interests": [string array],
+  "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
   "experience": [
@@ -225,10 +225,10 @@ For student user:
 For professor user:
 ```
 "data": {
-  "aboutme" : [string],
+  "about_me" : [string],
   "name": [string],
   "coursework": [string array],
-  "research interests": [string array]
+  "research_interests": [string array]
 }
 ```
 
@@ -249,11 +249,11 @@ Response Body `data` (200):
 For student user:
 ```
 "data": {
-  "aboutme" : [string],
+  "about_me" : [string],
   "gpa": [float],
   "major": [string],
   "name": [string],
-  "research interests": [string array],
+  "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
   "experience": [
@@ -270,10 +270,10 @@ For student user:
 For professor user:
 ```
 "data": {
-  "aboutme" : [string],
+  "about_me" : [string],
   "name": [string],
   "coursework": [string array],
-  "research interests": [string array]
+  "research_interests": [string array]
 }
 ```
 
@@ -282,7 +282,7 @@ For professor user:
 
 Updates the current user's profile with the given profile data using their valid `idToken`. If `idToken` is invalid or expired, this call fails. The parameters that will be updated depend on whether the user is a student or a professor. On sucess, this endpoint will return the updated profile in the same format as [/getProfile](#getprofile) endpoint.
 
-Each profile parameter will be optional in the request body
+Each profile parameter will be optional in the request body. Year will be an integer 1-5, meaning Freshmen-Graduate. Major will be array of strings in case of multiple majors
 
 Request Body (JSON):
 ```
@@ -293,11 +293,11 @@ Request Body (JSON):
 ```
 For student user:
 ```
-  "aboutme" : [string],
+  "about_me" : [string],
   "gpa": [float],
   "major": [string],
   "name": [string],
-  "research interests": [string array],
+  "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
   "experience": [
@@ -312,10 +312,10 @@ For student user:
 
 For professor user:
 ```
-  "aboutme" : [string],
+  "about_me" : [string],
   "name": [string],
   "coursework": [string array],
-  "research interests": [string array]
+  "research_interests": [string array]
 ```
 
 
