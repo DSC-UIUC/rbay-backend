@@ -205,6 +205,8 @@ For student user:
 ```
 "data": {
   "about_me" : [string],
+  "picture": [string],
+  "year" : [int],
   "gpa": [float],
   "major": [string],
   "name": [string],
@@ -227,6 +229,7 @@ For professor user:
 "data": {
   "about_me" : [string],
   "name": [string],
+  "picture": [string],
   "coursework": [string array],
   "research_interests": [string array]
 }
@@ -251,11 +254,13 @@ For student user:
 "data": {
   "about_me" : [string],
   "gpa": [float],
+  "year" : [int],
   "major": [string],
   "name": [string],
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "picture": [string],
   "experience": [
     {
       "title": [string],
@@ -272,6 +277,7 @@ For professor user:
 "data": {
   "about_me" : [string],
   "name": [string],
+  "picture": [string],
   "coursework": [string array],
   "research_interests": [string array]
 }
@@ -294,12 +300,14 @@ Request Body (JSON):
 For student user:
 ```
   "about_me" : [string],
+  "year" : [int],
   "gpa": [float],
   "major": [string],
   "name": [string],
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "picture": [string],
   "experience": [
     {
       "title": [string],
@@ -315,6 +323,7 @@ For professor user:
   "about_me" : [string],
   "name": [string],
   "coursework": [string array],
+  "picture": [string],
   "research_interests": [string array]
 ```
 
