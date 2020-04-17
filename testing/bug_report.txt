@@ -11,4 +11,4 @@
 
 5.	For setProfile, major and gpa don't update
 
-6. getProfile doesn't work for some reason
+6. 	getProfile doesn't work for some reason
