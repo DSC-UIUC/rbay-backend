@@ -1,13 +1,15 @@
 exports.NAME = 'name';
-exports.ABOUT_ME = 'aboutme';
+exports.ABOUT_ME = 'about_me';
 exports.COURSES = 'coursework';
 exports.GPA = 'gpa';
 exports.MAJOR = 'major';
 exports.YEAR = 'year';
 exports.EXP = 'experience';
-exports.INTERESTS = 'research interests';
+exports.INTERESTS = 'research_interests';
 exports.RESEARCH = 'research';
 exports.DEPT = 'department';
+exports.PIC = 'picture';
+exports.SKILLS = 'skills';
 
 exports.UID = 'uid';
 exports.PROFREF = 'profile';

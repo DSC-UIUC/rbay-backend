@@ -155,9 +155,11 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.GPA]: -1,
         [CONSTS.MAJOR]: [],
         [CONSTS.YEAR]: -1,
-        [CONSTS.COURSES]: {},
+        [CONSTS.COURSES]: [],
         [CONSTS.INTERESTS]: [],
         [CONSTS.EXP]: [],
+        [CONSTS.PIC]: "",
+        [CONSTS.SKILLS]: []
       };
     } else {
       profileJson = {
@@ -165,7 +167,8 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.INTERESTS]: [],
-        [CONSTS.DEPT]: ""
+        [CONSTS.DEPT]: "",
+        [CONSTS.PIC]: ""
       }
     }
 
@@ -256,11 +259,11 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
     return utils.handleBadRequest(res, 'Must be a DELETE request.');
   }
 
-  if (!(req.body.hasOwnProperty("idToken"))) {
-    return utils.handleBadRequest(res, "Missing idToken in body.");
+  if (!(req.query.hasOwnProperty("idToken"))) {
+    return utils.handleBadRequest(res, "Missing idToken in query.");
   }
 
-  let decodedUid = await verifyTokenWithAdmin(req.body.idToken);
+  let decodedUid = await verifyTokenWithAdmin(req.query.idToken);
   console.log(decodedUid);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
