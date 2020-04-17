@@ -341,9 +341,9 @@ Request Query (URL encoded parameters):
 Response Body `data` (200):
 
 ```
-"data" : {
-        "id": [string]
-    }
+"data" : [
+   
+]
 ```
 
 
@@ -422,7 +422,8 @@ Request Query (URL encoded parameters):
 ```
 
 `idToken` and `postingId` are required.
-=======
+
+```
 "data" : [
    
 ]
@@ -437,28 +438,10 @@ Request Body (JSON):
 
 ```
 {
-  "tags": [array of strings],
-  "title": [string],
-  "lab_name": [string],
-  "description": [string],
-  "requirements": {
-    "gpa": [float],
-    "year": [string],
-    "major": [array of strings],
-    "coursework": [array of strings]
-  },
-  "applicants" : [array of strings],
-  "is_open": [boolean]
+  "idToken" : [string],
+  "postingId" : [string],
+  "applicant" : [string array]
 }
-```
-All fields are required.
-
-Response Body `data` (200):
-
-```
-"data" : {
-        "id": [string]
-    }
 ```
 
 <a name="applyToPosting" id="applyToPosting"></a>
@@ -515,7 +498,8 @@ Response Body `data` (200):
 
 ---
 // TODO add more
-=======
+
+```
   "idToken" : [string],
   "postingId" : [string],
   "applicant" : [string array]
