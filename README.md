@@ -362,7 +362,8 @@ Response Body `data` (200):
     "selected_applicants" : [string array],
     "requirements"        : {...},
     "tags"                : [string array]
-   }
+   },
+   {...}
 ]
 ```
 

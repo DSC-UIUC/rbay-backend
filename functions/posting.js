@@ -25,6 +25,18 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
         // adding postingID to returned data
         postData[CONSTS.ID] = postingDoc.id;
 
+        // setting applicant and selected_applicant fields
+        let cleanedApp = [];
+        for (appRef of postData[CONSTS.APPLICANTS]) {
+            cleanedApp.push(appRef.id);
+        }
+        postData[CONSTS.APPLICANTS] = cleanedApp;
+        let cleanedSelectedApp = [];
+        for (selectedAppRef of postData[CONSTS.SELECTED_APPLICANTS]) {
+            cleanedSelectedApp.push(selectedAppRef.id);
+        }
+        postData[CONSTS.SELECTED_APPLICANTS] = cleanedSelectedApp;
+
         data.push(postData);
       }
     }
