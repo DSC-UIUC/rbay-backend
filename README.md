@@ -351,7 +351,18 @@ Response Body `data` (200):
 
 ```
 "data" : [
-   
+   {
+    "lab_name"            : [string],
+    "professor"           : [string],
+    "professor_id"        : [string],
+    "title"               : [string],
+    "description"         : [string],
+    "is_open"             : [boolean],
+    "applicants"          : [string array],
+    "selected_applicants" : [string array],
+    "requirements"        : {...},
+    "tags"                : [string array]
+   }
 ]
 ```
 
@@ -515,10 +526,6 @@ Response Body `data` (200):
 }
 ```
 
-<a name="getuserrecommendations" id="getuserrecommendations"></a>
-**GET /getUserRecommendations**
-
-// TODO please follow the exact format of the docs above
 
 ---
 

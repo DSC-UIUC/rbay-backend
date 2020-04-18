@@ -14,6 +14,17 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
       let postingDoc = await postingRef.get();
       if (postingDoc.exists) {
         let { professor, ...postData } = postingDoc.data();
+
+        // setting the professor name in the posting data
+        let profUserRef = await professor.get();
+        let profProfileRef = await profUserRef.data()[CONSTS.PROFREF].get();
+        let professorName = profProfileRef.data()[CONSTS.NAME];
+        postData[CONSTS.PROFESSOR] = professorName;
+        postData[CONSTS.PROFESSOR_ID] = profUserRef.id;
+
+        // adding postingID to returned data
+        postData[CONSTS.ID] = postingDoc.id;
+
         data.push(postData);
       }
     }

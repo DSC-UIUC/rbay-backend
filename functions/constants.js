@@ -22,6 +22,7 @@ exports.EMAIL = 'email';
 exports.USERNAME = 'username';
 exports.PASSWORD = 'password';
 
+exports.ID = 'id';
 exports.TITLE = 'title';
 exports.LAB_NAME = 'lab_name';
 exports.DESCRIPTION = 'description';
@@ -31,3 +32,4 @@ exports.PROFESSOR = 'professor';
 exports.APPLICANTS = 'applicants';
 exports.IS_OPEN = 'is_open';
 exports.SELECTED = 'selected_applicants';
+exports.PROFESSOR_ID = 'professor_id';
