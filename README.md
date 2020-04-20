@@ -422,7 +422,7 @@ Request Query (URL encoded parameters):
 ```
 
 `idToken` and `postingId` are required.
-
+```
 "data" : [
    
 ]
