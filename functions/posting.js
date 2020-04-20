@@ -394,3 +394,57 @@ exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
   // TODO
   return utils.handleSuccess(res, []);
 });
+
+exports.closePosting = functions.https.onRequest(async (req, res) => {
+    if (req.method !== "POST") {
+        return utils.handleBadRequest(res, "Must be a POST request.");
+    }
+
+    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId")) {
+        utils.handleBadRequest(res, "Missing idToken or postingId.");
+        return;
+    }
+
+    let idToken = req.body["idToken"];
+    let decodedUid = await auth.verifyTokenWithAdmin(idToken);
+    console.log(decodedUid);
+    if (decodedUid == null) {
+        utils.handleBadRequest(res, "Token is invalid or expired.");
+        return;
+    }
+
+    // Find user creating posting.
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+        return utils.handleServerError(res, "User does not exist.");
+    }
+
+    // Find posting to be closed.
+    let postingDocRef = fb.db.collection("postings").doc(req.body["postingId"]);
+    let postingDoc = await postingDocRef.get();
+    if (!postingDoc.exists) {
+        utils.handleServerError(res, "Posting does not exist.");
+        return;
+    }
+
+    let postingProfRefValue = postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"]
+    let linkedProfessorDocRef = fb.db.collection("users").doc(postingProfRefValue);
+
+    // Check to make sure user is correct.
+    if (linkedProfessorDocRef.id !== userDocRef.id) {
+        utils.handleBadRequest(res, "Only the original poster can only close their own postings.");
+        return;
+    }
+
+    // Make sure posting hasn't been closed already.
+    let postingDocData = postingDoc.data();
+    if (!postingDocData[CONSTS.IS_OPEN]) {
+        utils.handleBadRequest(res, "This posting has already been closed.");
+        return;
+    }
+
+    // Close posting.
+    postingDocRef.update({ [CONSTS.IS_OPEN] : false});
+    utils.handleSuccess(res, { "id": req.body.postingId });
+});
