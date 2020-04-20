@@ -2,6 +2,6 @@
 
 2. CreatePosting requirements field is weird. Documentation asks for a dictionary but gets set up as an array
 
-3. updatePosting Your client does not have permission to the requested URL. Also updatePosting Documentation not updated
+3. updatePosting Your client does not have permission to the requested URL. Also updatePosting Documentation not updated.
 
 4. 
