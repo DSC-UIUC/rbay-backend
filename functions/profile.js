@@ -4,6 +4,48 @@ const utils = require('./utils.js');
 const fb = require('./firebase.js');
 const auth = require('./auth.js');
 
+const getProfileById = async (uid, res) => {
+  try {
+    let userDocRef = fb.db.collection("users").doc(uid);
+    let userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      return utils.handleServerError(res, "User does not exist.");
+    }
+
+    let profileDocRef = userDoc.data().profile;
+    let profileDoc = await profileDocRef.get();
+    if (!profileDoc.exists) {
+      return utils.handleServerError(res, "Profile does not exist.");
+    }
+
+    let data = profileDoc.data();
+    let { user, ...rest } = data;
+
+    return utils.handleSuccess(res, rest);
+  } catch (err) {
+    return utils.handleServerError(res, err);
+  }
+}
+
+exports.getProfileById = functions.https.onRequest(async (req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+
+  if (req.method !== "GET") {
+    return utils.handleBadRequest(res, "Must be a GET request.");
+  }
+
+  if (!req.query.hasOwnProperty("uid")) {
+    return utils.handleBadRequest(res, "Missing uid.");
+  }
+
+  let uid = req.query.uid;
+  console.log(uid);
+  getProfileById(uid, res);
+});
+
 exports.getProfile = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
   res.set('Access-Control-Allow-Origin', '*');
@@ -25,26 +67,7 @@ exports.getProfile = functions.https.onRequest(async (req, res) => {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
   }
 
-  try {
-    let userDocRef = fb.db.collection("users").doc(decodedUid);
-    let userDoc = await userDocRef.get();
-    if (!userDoc.exists) {
-      return utils.handleServerError(res, "User does not exist.");
-    }
-
-    let profileDocRef = userDoc.data().profile;
-    let profileDoc = await profileDocRef.get();
-    if (!profileDoc.exists) {
-      return utils.handleServerError(res, "Profile does not exist.");
-    }
-
-    let data = profileDoc.data();
-    let { user, ...rest } = data;
-
-    return utils.handleSuccess(res, rest);
-  } catch (err) {
-    return utils.handleServerError(res, err);
-  }
+  getProfileById(decodedUid, res);
 });
 
 // idtoken needs to be in body

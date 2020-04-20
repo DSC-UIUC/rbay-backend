@@ -111,9 +111,17 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
     return utils.handleBadRequest(res, "Missing required fields: email, password, is_student, or username");
   }
 
-  let email = req.body.email;
-  let password = req.body.password;
-  let username = req.body.username;
+  let email = req.body[CONSTS.EMAIL];
+  let password = req.body[CONSTS.PASSWORD];
+  let username = req.body[CONSTS.USERNAME];
+  let is_student = req.body[CONSTS.IS_STUDENT];
+
+  if (typeof email !== "string"
+      || typeof password !== "string"
+      || typeof username !== "string"
+      || typeof is_student !== "boolean") {
+    return utils.handleBadRequest(res, "A given parameter has incorrect data type");
+  }
 
   try {
     let docRef = fb.db.collection("users").where("username", "==", username).limit(1);
@@ -131,9 +139,9 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
     let profileDocRef = fb.db.collection("profiles").doc(uid);
 
     let userJson = createUserJson(
-      req.body[CONSTS.IS_STUDENT],
-      req.body[CONSTS.EMAIL],
-      req.body[CONSTS.USERNAME],
+      is_student,
+      email,
+      username,
       profileDocRef,
     );
 
@@ -147,9 +155,11 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.GPA]: -1,
         [CONSTS.MAJOR]: [],
         [CONSTS.YEAR]: -1,
-        [CONSTS.COURSES]: {},
+        [CONSTS.COURSES]: [],
         [CONSTS.INTERESTS]: [],
         [CONSTS.EXP]: [],
+        [CONSTS.PIC]: "",
+        [CONSTS.SKILLS]: []
       };
     } else {
       profileJson = {
@@ -157,7 +167,8 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.INTERESTS]: [],
-        [CONSTS.DEPT]: ""
+        [CONSTS.DEPT]: "",
+        [CONSTS.PIC]: ""
       }
     }
 
@@ -248,11 +259,11 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
     return utils.handleBadRequest(res, 'Must be a DELETE request.');
   }
 
-  if (!(req.body.hasOwnProperty("idToken"))) {
-    return utils.handleBadRequest(res, "Missing idToken in body.");
+  if (!(req.query.hasOwnProperty("idToken"))) {
+    return utils.handleBadRequest(res, "Missing idToken in query.");
   }
 
-  let decodedUid = await verifyTokenWithAdmin(req.body.idToken);
+  let decodedUid = await verifyTokenWithAdmin(req.query.idToken);
   console.log(decodedUid);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");

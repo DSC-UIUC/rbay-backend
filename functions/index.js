@@ -10,10 +10,12 @@ exports.signUp = auth.signUp;
 exports.checkToken = auth.checkToken;
 
 exports.getProfile = profile.getProfile;
+exports.getProfileById = profile.getProfileById
 exports.setProfile = profile.setProfile;
 
 exports.getUserPostings = posting.getUserPostings;
 exports.getUserRecommendations = posting.getUserRecommendations;
+
 exports.createPosting = posting.createPosting;
 exports.updatePosting = posting.updatePosting;
 exports.deletePosting = posting.deletePosting;

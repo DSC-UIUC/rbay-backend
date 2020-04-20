@@ -1,10 +1,7 @@
-1.	When I tried to signUp with wrong val for is_student, I got an error, 
-	but a user document was still created. So when I tried again with 
-	correct is_student, it said user already exists. User document should be made at the end.
+1. For setProfile, major and gpa don't update
 
-2.	I deleted the user doc. Then it said email already exists :(
+2. CreatePosting requirements field is weird. Documentation asks for a dictionary but gets set up as an array
 
-3.	Delete requests are usually not allowed to have a body?
+3. updatePosting Your client does not have permission to the requested URL. Also updatePosting Documentation not updated.
 
-4.	<h1>Error: Forbidden</h1>
-	<h2>Your client does not have permission to get URL <code>/setProfile</code> from this server.</h2>
+4. 
