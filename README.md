@@ -542,10 +542,3 @@ Response Body `data` (200):
     "applicants" : [array of references (only appears if original poster is one making request)]
 }
 ```
-
-```
-  "idToken" : [string],
-  "postingId" : [string],
-  "applicant" : [string array]
-}
-```
