@@ -351,11 +351,6 @@ Response Body `data` (200):
 
 Creates a posting. Can only be used by users with professor status.
 
-Request Query (URL encoded parameters):
-```
-/createPosting
-```
-
 Request body (JSON):
 ```
 {
@@ -373,7 +368,7 @@ Request body (JSON):
 }
 ```
 
-`Title`, `tags`, `description`, and `lab_name` are required.
+`title`, `tags`, `description`, and `lab_name` are required.
 
 Response Body `data` (200):
 
@@ -408,11 +403,6 @@ Response Body `data` (200):
 **POST /updatePosting**
 
 Changes posting to contain values that are in the request body. Users can only update their own postings.
-
-Request Query (URL encoded parameters):
-```
-/updatePosting
-```
 
 Request body (JSON):
 ```
@@ -492,6 +482,27 @@ Response Body `data` (200):
 ```
 "data" : {
         "Success": [string]
+    }
+```
+
+<a name="closePosting" id="closePosting"></a>
+**POST /closePosting**
+
+Sets the `is_open` field of the posting with the specified ID to false. Professors are only able to close their own postings.
+
+Request Body (JSON):
+```
+{
+  "postingId": [string],
+  "idToken": [string]
+}
+```
+`postingId` and `idToken` are required fields.
+
+Response Body `data` (200):
+```
+"data" : {
+        "id": [string]
     }
 ```
 
