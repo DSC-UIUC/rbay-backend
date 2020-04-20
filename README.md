@@ -346,12 +346,6 @@ Response Body `data` (200):
     }
 ```
 
-
-<a name="getuserrecommendations" id="getuserrecommendations"></a>
-**GET /getUserRecommendations**
-
-// TODO please follow the exact format of the docs above
-
 <a name="createPosting" id="createPosting"></a>
 **POST /createPosting**
 
@@ -359,22 +353,13 @@ Creates a posting. Can only be used by users with professor status.
 
 Request Query (URL encoded parameters):
 ```
-/getUserPostings?idToken=[string]
-```
-
-`idToken` is required.
-
-Response Body `data` (200):
-
-```
-"data" : {
-        "id": [string]
-    }
+/createPosting
 ```
 
 Request body (JSON):
 ```
 {
+  "idToken" : [string]
   "tags": [array of strings],
   "title": [string],
   "lab_name": [string],
@@ -390,6 +375,14 @@ Request body (JSON):
 
 `Title`, `tags`, `description`, and `lab_name` are required.
 
+Response Body `data` (200):
+
+```
+"data" : {
+        "id": [string]
+    }
+```
+
 <a name="deletePosting" id="deletePosting"></a>
 **DELETE /deletePosting**
 
@@ -397,7 +390,7 @@ Deletes posting. Only the user that created a given posting can delete it.
 
 Request Query (URL encoded parameters):
 ```
-/getUserPostings?idToken=[string]&postingId=[string]
+/deletePosting?idToken=[string]&postingId=[string]
 ```
 
 `idToken` and `postingId` are required.
@@ -418,20 +411,40 @@ Changes posting to contain values that are in the request body. Users can only u
 
 Request Query (URL encoded parameters):
 ```
-/getUserPostings?idToken=[string]&postingId=[string]
+/updatePosting
 ```
 
-`idToken` and `postingId` are required.
+Request body (JSON):
 ```
-"data" : [
-   
-]
+{
+  "idToken" : [string],
+  "postingId" : [string],
+  "tags": [array of strings],
+  "title": [string],
+  "lab_name": [string],
+  "description": [string],
+  "requirements": {
+    "gpa": [float],
+    "year": [string],
+    "major": [array of strings],
+    "coursework": [array of strings]
+  }
+}
+```
+
+All fields except for `requirements` are required.
+
+Response Body `data` (200):
+```
+"data" : {
+    "id" : [string]
+}
 ```
 
 <a name="selectapplicantforposting" id="selectapplicantforposting"></a>
 **POST /selectApplicantForPosting**
 
-Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting
+Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting.
 
 Request Body (JSON):
 
@@ -512,22 +525,3 @@ Response Body `data` (200):
     "applicants" : [array of references (only appears if original poster is one making request)]
 }
 ```
-
----
-// TODO add more
-=======
-  "idToken" : [string],
-  "postingId" : [string],
-  "applicant" : [string array]
-}
-```
-
-<a name="getuserrecommendations" id="getuserrecommendations"></a>
-**GET /getUserRecommendations**
-
-// TODO please follow the exact format of the docs above
-
----
-
-// TODO add more
-

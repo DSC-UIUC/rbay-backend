@@ -93,7 +93,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
+    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
         return;
     }
@@ -109,7 +109,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    let idToken = req.query.idToken;
+    let idToken = req.body.idToken;
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
     if (decodedUid == null) {
@@ -126,7 +126,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
     }
 
     // Find document to be updated.
-    let postingDocRef = fb.db.collection("postings").doc(req.query["postingId"]);
+    let postingDocRef = fb.db.collection("postings").doc(req.body["postingId"]);
     let postingDoc = await postingDocRef.get();
     let postingProfRefValue = postingDoc["_fieldsProto"][CONSTS.PROFESSOR]["referenceValue"]
     let linkedProfessorDocRef = fb.db.collection("users").doc(postingProfRefValue);
@@ -268,7 +268,7 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!req.query.hasOwnProperty("idToken")) {
+    if (!req.body.hasOwnProperty("idToken")) {
         utils.handleBadRequest(res, "Missing idToken.");
         return;
     }
@@ -281,7 +281,7 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    let idToken = req.query.idToken;
+    let idToken = req.body.idToken;
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
     if (decodedUid == null) {
