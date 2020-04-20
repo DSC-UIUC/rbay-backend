@@ -32,10 +32,12 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
         }
         postData[CONSTS.APPLICANTS] = cleanedApp;
         let cleanedSelectedApp = [];
-        for (selectedAppRef of postData[CONSTS.SELECTED_APPLICANTS]) {
-            cleanedSelectedApp.push(selectedAppRef.id);
+        if (postData[CONSTS.SELECTED]) {
+            for (selectedAppRef of postData[CONSTS.SELECTED]) {
+                cleanedSelectedApp.push(selectedAppRef.id);
+            }
         }
-        postData[CONSTS.SELECTED_APPLICANTS] = cleanedSelectedApp;
+        postData[CONSTS.SELECTED] = cleanedSelectedApp;
 
         data.push(postData);
       }
