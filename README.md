@@ -458,7 +458,7 @@ Response Body `data` (200):
 <a name="selectapplicantforposting" id="selectapplicantforposting"></a>
 **POST /selectApplicantForPosting**
 
-Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting.
+Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting. This will move the applicant from the postings applicants field to selected_applicants field.
 
 Request Body (JSON):
 
@@ -466,7 +466,7 @@ Request Body (JSON):
 {
   "idToken" : [string],
   "postingId" : [string],
-  "applicant" : [string array]
+  "applicant" : [string]
 }
 ```
 
