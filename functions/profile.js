@@ -91,7 +91,8 @@ exports.setProfile = functions.https.onRequest(async (req, res) => {
 
   let { idToken, ...newProfileData } = req.body;
   let decodedUid = await auth.verifyTokenWithAdmin(idToken);
-  // console.log(decodedUid);
+  console.log(decodedUid);
+  console.log(newProfileData);
   if (decodedUid == null) {
     return utils.handleBadRequest(res, "Token is invalid or expired.");
   }

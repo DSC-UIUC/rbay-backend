@@ -153,7 +153,7 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.GPA]: -1,
-        [CONSTS.MAJOR]: [],
+        [CONSTS.MAJOR]: "",
         [CONSTS.YEAR]: -1,
         [CONSTS.COURSES]: [],
         [CONSTS.INTERESTS]: [],

@@ -333,7 +333,9 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.LAB_NAME]: req.body[CONSTS.LAB_NAME],
         [CONSTS.PROFESSOR]: userDocRef,
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
-        [CONSTS.TAGS]: req.body[CONSTS.TAGS]
+        [CONSTS.TAGS]: req.body[CONSTS.TAGS],
+        [CONSTS.APPLICANTS] : [],
+        [CONSTS.SELECTED] : []
     }
 
     let requirements = {};
@@ -436,7 +438,7 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
     }
 
     // checking to see if posting is in professors posting list
-    if (!(postingId in userDocData[CONSTS.POSTINGS])) {
+    if (!(userDocData[CONSTS.POSTINGS].find(post => post.id === postingId))) {
       utils.handleBadRequest(res, "Given professor did not create given posting");
       return;
     }
@@ -448,13 +450,33 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
         utils.handleServerError(res, "Posting does not exist.");
         return;
     }
-    if (!postingDoc[CONSTS.IS_OPEN]) {
-      utils.handleServerError(res, "Posting is already closed");
+    let postingDocData = await postingDoc.data();
+    console.log(postingDocData);
+    if (!postingDocData[CONSTS.IS_OPEN]) {
+      utils.handleBadRequest(res, "Posting is already closed");
+      return;
     }
 
-    // postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(userDocRef) });
 
+    // checking applicant is already selected
+    // getting applicant user ref
+    let applicant_id = req.body.applicant;
+    let appUserRef = fb.db.collection("users").doc(applicant_id);
 
+    if (postingDocData[CONSTS.SELECTED].find(app => app.id === applicant_id)) {
+        utils.handleBadRequest(res, "Given Applicant is already selected");
+        return;
+    }
+    // checking if applicant has already applied
+    if (postingDocData[CONSTS.APPLICANTS].find(app => app.id === applicant_id)) {
+        postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(appUserRef) });
+        postingDocRef.update({ [CONSTS.APPLICANTS]: FieldValue.arrayRemove(appUserRef) });
+        utils.handleSuccess(res, "Applicant successfully selected");
+        return;
+    } else {
+        utils.handleBadRequest(res, "Given Applicant did not apply for this posting");
+        return;
+    }
   } catch(err) {
     utils.handleServerError(res, err);
   }
