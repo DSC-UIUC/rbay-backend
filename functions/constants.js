@@ -10,6 +10,7 @@ exports.RESEARCH = 'research';
 exports.DEPT = 'department';
 exports.PIC = 'picture';
 exports.SKILLS = 'skills';
+exports.WEBSITE = 'website';
 
 exports.UID = 'uid';
 exports.PROFREF = 'profile';

@@ -76,6 +76,9 @@ exports.verifyFieldsProfile = (is_student, body) => {
   if (CONSTS.PIC in body && typeof body[CONSTS.PIC] === 'string') {
     profile[CONSTS.PIC] = body[CONSTS.PIC];
   }
+  if (CONSTS.WEBSITE in body && typeof body[CONSTS.WEBSITE] === 'string') {
+    profile[CONSTS.WEBSITE] = body[CONSTS.WEBSITE];
+  }
   if (CONSTS.INTERESTS in body && Array.isArray(body[CONSTS.INTERESTS])) {
     profile[CONSTS.INTERESTS] = [];
     for (interest of body[CONSTS.INTERESTS]) {

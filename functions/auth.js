@@ -31,6 +31,7 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
     data.username = docData.username;
     data.is_student = docData.is_student;
+    data.email = docData.email;
 
     return utils.handleSuccess(res, data);
   } catch (err) {
@@ -159,7 +160,8 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.INTERESTS]: [],
         [CONSTS.EXP]: [],
         [CONSTS.PIC]: "",
-        [CONSTS.SKILLS]: []
+        [CONSTS.SKILLS]: [],
+        [CONSTS.WEBSITE]: ""
       };
     } else {
       profileJson = {
@@ -168,7 +170,8 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.INTERESTS]: [],
         [CONSTS.DEPT]: "",
-        [CONSTS.PIC]: ""
+        [CONSTS.PIC]: "",
+        [CONSTS.WEBSITE]: ""
       }
     }
 
