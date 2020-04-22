@@ -16,4 +16,5 @@ admin.initializeApp({
 });
 
 exports.db = admin.firestore();
+exports.storage = admin.storage();
 exports.admin = admin;
