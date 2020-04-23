@@ -130,7 +130,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         !req.body.hasOwnProperty(CONSTS.TAGS) ||
         !req.body.hasOwnProperty(CONSTS.APPLICANTS) ||
         !req.body.hasOwnProperty(CONSTS.IS_OPEN)) {
-        utils.handleBadRequest(res, "Missing title, lab name, or description, tags, " + 
+        utils.handleBadRequest(res, "Missing title, lab name, or description, tags, " +
             "applicant list, or status of posting.");
         return;
     }
@@ -195,7 +195,7 @@ exports.getPostingById = functions.https.onRequest(async (req, res) => {
         return utils.handleBadRequest(res, 'Must be a GET request.');
     }
 
-    
+
     if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
         return;
@@ -287,44 +287,43 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
+    if (req.method === "OPTIONS") {
+      return res.end();
+    }
 
     // Validity checking.
     if (req.method !== "POST") {
-        utils.handleBadRequest(res, "Must be a POST request.");
-        return;
+      return utils.handleBadRequest(res, "Must be a POST request.");
     }
 
     if (!req.body.hasOwnProperty("idToken")) {
-        utils.handleBadRequest(res, "Missing idToken.");
-        return;
+      return utils.handleBadRequest(res, "Missing idToken.");
     }
 
     if (!req.body.hasOwnProperty(CONSTS.DESCRIPTION) ||
         !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
-        !req.body.hasOwnProperty(CONSTS.TAGS)) {
-        utils.handleBadRequest(res, "Missing title, lab name, or description, or tags.");
-        return;
+        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME)) {
+      return utils.handleBadRequest(res, "Missing title, lab name, professor name, or description.");
     }
 
     let idToken = req.body.idToken;
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
     if (decodedUid == null) {
-        utils.handleBadRequest(res, "Token is invalid or expired.");
-        return;
+      return utils.handleBadRequest(res, "Token is invalid or expired.");
     }
 
     // Find user creating posting.
     let userDocRef = fb.db.collection("users").doc(decodedUid);
     let userDoc = await userDocRef.get();
     if (!userDoc.exists) {
-        return utils.handleServerError(res, "User does not exist.");
+      return utils.handleServerError(res, "User does not exist.");
     }
 
     // Check to make sure user is not student.
     if (userDoc["_fieldsProto"][CONSTS.IS_STUDENT]["booleanValue"]) {
-        return utils.handleBadRequest(res, "Students cannot make postings.");
+      return utils.handleBadRequest(res, "Students cannot make postings.");
     }
 
     // Constructing posting document.
@@ -332,29 +331,22 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.TITLE]: req.body[CONSTS.TITLE],
         [CONSTS.LAB_NAME]: req.body[CONSTS.LAB_NAME],
         [CONSTS.PROFESSOR]: userDocRef,
+        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
-        [CONSTS.TAGS]: req.body[CONSTS.TAGS],
+        [CONSTS.TAGS]: req.body.hasOwnProperty(CONSTS.TAGS) ? req.body[CONSTS.TAGS] : [],
         [CONSTS.APPLICANTS] : [],
-        [CONSTS.SELECTED] : []
+        [CONSTS.SELECTED] : [],
+        [CONSTS.IS_OPEN]: true,
+        [CONSTS.REQUIREMENTS]: req.body.hasOwnProperty(CONSTS.REQUIREMENTS) ? req.body[CONSTS.REQUIREMENTS] : {}
     }
 
-    let requirements = {};
-    if (req.body.hasOwnProperty(CONSTS.REQUIREMENTS)) {
-        requirements = req.body[CONSTS.REQUIREMENTS];
+    try {
+      let postingDocRef = await fb.db.collection(CONSTS.POSTINGS).add(postingJson);
+      userDocRef.update({ "postings": FieldValue.arrayUnion(postingDocRef) });
+      return utils.handleSuccess(res, { "id": postingDocRef.id });
+    } catch (err) {
+      return utils.handleServerError(res, err);
     }
-
-    postingJson[CONSTS.REQUIREMENTS] = requirements;
-    postingJson[CONSTS.APPLICANTS] = [];
-    postingJson[CONSTS.IS_OPEN] = true;
-    fb.db.collection(CONSTS.POSTINGS).add(postingJson)
-        .then(function (postingDocRef) {
-            // Adding reference to user document.
-            userDocRef.update({ "postings": FieldValue.arrayUnion(postingDocRef) });
-            utils.handleSuccess(res, { "id": postingDocRef.id });
-        }).catch(function (error) {
-            utils.handleServerError(res, error);
-        });
-    return;
 });
 
 exports.getUserPostings = functions.https.onRequest(async (req, res) => {
@@ -392,7 +384,7 @@ exports.getUserPostings = functions.https.onRequest(async (req, res) => {
     let postingsRefArray = userDoc.data().postings;
     let data = await getUserPostingsWithRef(postingsRefArray);
 
-    utils.handleSuccess(res, data);
+    utils.handleSuccess(res, { entries: data });
   } catch (err) {
     utils.handleServerError(res, err);
   }

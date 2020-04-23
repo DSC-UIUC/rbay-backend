@@ -30,6 +30,7 @@ exports.DESCRIPTION = 'description';
 exports.REQUIREMENTS = 'requirements';
 exports.TAGS = 'tags';
 exports.PROFESSOR = 'professor';
+exports.PROFESSOR_NAME = 'professor_name';
 exports.APPLICANTS = 'applicants';
 exports.IS_OPEN = 'is_open';
 exports.SELECTED = 'selected_applicants';
