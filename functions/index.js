@@ -13,6 +13,8 @@ exports.checkToken = auth.checkToken;
 exports.getProfile = profile.getProfile;
 exports.getProfileById = profile.getProfileById
 exports.setProfile = profile.setProfile;
+exports.getProfileFileSignedUrl = profile.getProfileFileSignedUrl;
+exports.setProfileFile = profile.setProfileFile;
 
 exports.getUserPostings = posting.getUserPostings;
 exports.getUserRecommendations = posting.getUserRecommendations;

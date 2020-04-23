@@ -24,6 +24,7 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
     let data = {};
     data.idToken = response.data["idToken"];
+    data.expirationTimestamp = parseInt(response.data["expiresIn"]) + Math.round(Date.now() / 1000);
 
     let docRef = fb.db.collection("users").where("email", "==", email).limit(1);
     let querySnapshot = await docRef.get();
