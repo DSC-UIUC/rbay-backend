@@ -359,6 +359,7 @@ Request body (JSON):
   "title": [string],
   "lab_name": [string],
   "description": [string],
+  "professor_name":[string]
   "requirements": {
     "gpa": [float],
     "year": [string],
@@ -368,7 +369,7 @@ Request body (JSON):
 }
 ```
 
-`title`, `tags`, `description`, and `lab_name` are required.
+`title`, `tags`, `description`, `professor_name`, and `lab_name` are required.
 
 Response Body `data` (200):
 
@@ -402,7 +403,7 @@ Response Body `data` (200):
 
 **POST /updatePosting**
 
-Changes posting to contain values that are in the request body. Users can only update their own postings.
+Changes posting to contain values that are in the request body. Users can only update their own postings. Cannot change list of applicants.
 
 Request body (JSON):
 ```
@@ -413,6 +414,8 @@ Request body (JSON):
   "title": [string],
   "lab_name": [string],
   "description": [string],
+  "is_open" : [boolean],
+  "selected_applicants": [array of strings]
   "requirements": {
     "gpa": [float],
     "year": [string],
@@ -470,9 +473,12 @@ Response Body `data` (200):
 
 Adds student to list of applicants for a posting. Returns bad request if student has already applied to posting. Only students can apply to postings.
 
-Request Query (URL encoded parameters):
+Request Body (JSON):
 ```
-/applyToPosting?idToken=[string]&postingId=[string]
+{
+  "postingId": [string],
+  "idToken": [string]
+}
 ```
 
 `idToken` and `postingId` are required.

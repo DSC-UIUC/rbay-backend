@@ -28,3 +28,5 @@ exports.TAGS = 'tags';
 exports.PROFESSOR = 'professor';
 exports.APPLICANTS = 'applicants';
 exports.IS_OPEN = 'is_open';
+exports.SELECTED_APPLICANTS = 'selected_applicants';
+exports.PROFESSOR_NAME = 'professor_name';

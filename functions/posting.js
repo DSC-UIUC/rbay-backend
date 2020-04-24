@@ -6,6 +6,71 @@ const fb = require('./firebase.js');
 const auth = require('./auth.js');
 const FieldValue = require('firebase-admin').firestore.FieldValue;
 
+function validateDataTypes(body, selectedApplicantCheck) {
+    // Requirements validation.
+    if (CONSTS.REQUIREMENTS in body) {
+        let requirements = body[CONSTS.REQUIREMENTS];
+        if ((CONSTS.GPA in requirements && typeof requirements[CONSTS.GPA] !== 'number') ||
+            (CONSTS.YEAR in requirements && typeof requirements[CONSTS.YEAR] !== 'number')) {
+            return false;
+        }
+
+        if ((CONSTS.MAJOR in requirements && !Array.isArray(requirements[CONSTS.MAJOR])) ||
+            (CONSTS.COURSES in requirements && !Array.isArray(requirements[CONSTS.COURSES]))) {
+            return false;
+        }
+
+        if (CONSTS.MAJOR in requirements) {
+            for (let i = 0; i < requirements[CONSTS.MAJOR].length; i++) {
+                if (typeof requirements[CONSTS.MAJOR][i] !== 'string') {
+                    return false;
+                }
+            }
+        }
+
+        if (CONSTS.COURSES in requirements) {
+            for (let i = 0; i < requirements[CONSTS.COURSES].length; i++) {
+                if (typeof requirements[CONSTS.COURSES][i] !== 'string') {
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Array-type validation (tags, applicant and selected applicants)
+    if (!Array.isArray(body[CONSTS.TAGS]) || //|| !Array.isArray(body[CONSTS.APPLICANTS]) ||
+        (selectedApplicantCheck && !Array.isArray(body[CONSTS.SELECTED_APPLICANTS]))) {
+        return false;
+    }
+
+    /*for (let i = 0; i < body[CONSTS.APPLICANTS].length; i++) {
+        if (typeof body[CONSTS.APPLICANTS][i] !== 'string') { // are we storing them as references or as strings?
+            return false;
+        }
+    }*/
+
+    for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
+        if (typeof body[CONSTS.TAGS][i] !== 'string') {
+            return false;
+        }
+    }
+
+    if (selectedApplicantCheck) {
+        for (let i = 0; i < body[CONSTS.SELECTED_APPLICANTS].length; i++) {
+            if (typeof body[CONSTS.SELECTED_APPLICANTS][i] !== 'string') {
+                return false;
+            }
+        }
+    }
+
+    // Remaining field check.
+    return typeof body[CONSTS.DESCRIPTION] === 'string' &&
+        typeof body[CONSTS.LAB_NAME] === 'string' &&
+        typeof body[CONSTS.TITLE] === 'string' &&
+        (!(CONSTS.IS_OPEN in body) || typeof body[CONSTS.IS_OPEN] === 'boolean') &&
+        typeof body[CONSTS.PROFESSOR_NAME] === 'string';
+}
+
 const getUserPostingsWithRef = async (postingsRefArray) => {
   let data = [];
 
@@ -36,12 +101,12 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
+    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
         return;
     }
 
-    let idToken = req.query.idToken;
+    let idToken = req.body.idToken;
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
     if (decodedUid == null) {
@@ -64,7 +129,7 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
     }
 
     // Find document to be updated.
-    let postingDocRef = fb.db.collection("postings").doc(req.query["postingId"]);
+    let postingDocRef = fb.db.collection("postings").doc(req.body["postingId"]);
     let postingDoc = await postingDocRef.get();
 
     let currentApplicants = postingDoc.data()[CONSTS.APPLICANTS];
@@ -102,10 +167,12 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
         !req.body.hasOwnProperty(CONSTS.TAGS) ||
-        !req.body.hasOwnProperty(CONSTS.APPLICANTS) ||
-        !req.body.hasOwnProperty(CONSTS.IS_OPEN)) {
-        utils.handleBadRequest(res, "Missing title, lab name, or description, tags, " + 
-            "applicant list, or status of posting.");
+        !req.body.hasOwnProperty(CONSTS.SELECTED_APPLICANTS) ||
+        !req.body.hasOwnProperty(CONSTS.IS_OPEN) ||
+        // !req.body.hasOwnProperty(CONSTS.APPLICANTS) ||
+        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME)) {
+        utils.handleBadRequest(res, "Missing title, lab name, description, tags, professor name, " + 
+            "selected applicant list, or status of posting.");
         return;
     }
 
@@ -137,6 +204,11 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
+    if (!validateDataTypes(req.body, true)) {
+        utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
+        return;
+    }
+
     // Constructing posting document.
     let postingJson = {
         [CONSTS.TITLE]: req.body[CONSTS.TITLE],
@@ -144,7 +216,10 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.PROFESSOR]: userDocRef,
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
         [CONSTS.TAGS]: req.body[CONSTS.TAGS],
-        [CONSTS.APPLICANTS]: req.body[CONSTS.APPLICANTS]
+        // [CONSTS.APPLICANTS]: req.body[CONSTS.APPLICANTS],
+        [CONSTS.SELECTED_APPLICANTS]: req.body[CONSTS.SELECTED_APPLICANTS],
+        [CONSTS.IS_OPEN]: req.body[CONSTS.IS_OPEN],
+        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME]
     }
 
     let requirements = {};
@@ -154,7 +229,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
 
     // Updating posting document.
     postingJson[CONSTS.REQUIREMENTS] = requirements;
-    postingDocRef.set(postingJson);
+    postingDocRef.update(postingJson);
     utils.handleSuccess(res, { "id": postingDocRef.id })
     return;
 });
@@ -276,8 +351,9 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
     if (!req.body.hasOwnProperty(CONSTS.DESCRIPTION) ||
         !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
-        !req.body.hasOwnProperty(CONSTS.TAGS)) {
-        utils.handleBadRequest(res, "Missing title, lab name, or description, or tags.");
+        !req.body.hasOwnProperty(CONSTS.TAGS) ||
+        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME)) {
+        utils.handleBadRequest(res, "Missing title, lab name, or description, professor name, or tags.");
         return;
     }
 
@@ -301,13 +377,19 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         return utils.handleBadRequest(res, "Students cannot make postings.");
     }
 
+    if (!validateDataTypes(req.body, false)) {
+        utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
+        return;
+    }
+
     // Constructing posting document.
     let postingJson = {
         [CONSTS.TITLE]: req.body[CONSTS.TITLE],
         [CONSTS.LAB_NAME]: req.body[CONSTS.LAB_NAME],
         [CONSTS.PROFESSOR]: userDocRef,
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
-        [CONSTS.TAGS]: req.body[CONSTS.TAGS]
+        [CONSTS.TAGS]: req.body[CONSTS.TAGS],
+        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME]
     }
 
     let requirements = {};
@@ -317,6 +399,7 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
 
     postingJson[CONSTS.REQUIREMENTS] = requirements;
     postingJson[CONSTS.APPLICANTS] = [];
+    postingJson[CONSTS.SELECTED_APPLICANTS] = [];
     postingJson[CONSTS.IS_OPEN] = true;
     fb.db.collection(CONSTS.POSTINGS).add(postingJson)
         .then(function (postingDocRef) {
