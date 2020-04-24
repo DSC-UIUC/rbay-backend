@@ -168,7 +168,9 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
     }
 
     postingDocRef.update({ [CONSTS.APPLICANTS]: FieldValue.arrayUnion(userDocRef) });
+    userDocRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayUnion(postingDocRef) });
     utils.handleSuccess(res, { "Success": decodedUid + " successfully applied to posting" });
+    
     return;
 });
 
