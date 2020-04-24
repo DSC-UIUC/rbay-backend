@@ -2,6 +2,7 @@ const auth = require('./auth.js');
 const profile = require('./profile.js');
 const posting = require('./posting.js');
 const config = require('./config.js');
+const search = require('./search.js');
 
 exports.changePassword = auth.changePassword;
 exports.deleteUser = auth.deleteUser;
@@ -28,3 +29,9 @@ exports.selectApplicantForPosting = posting.selectApplicantForPosting;
 exports.closePosting = posting.closePosting;
 
 exports.getConfig = config.getConfig;
+
+exports.updatePostingAlgolia = search.updatePostingAlgolia;
+exports.updateProfilesAlgolia = search.updateProfilesAlgolia;
+
+exports.getSearchPostings = search.getSearchPostings;
+exports.getSearchProfiles = search.getSearchProfiles;
