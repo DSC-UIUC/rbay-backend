@@ -1,3 +1,4 @@
+const auth = require('./auth.js');
 const fb = require('./firebase.js');
 const utils = require('./utils.js');
 const functions = require('firebase-functions');
@@ -69,11 +70,14 @@ exports.getSearchPostings = functions.https.onRequest(async (req, res) => {
     try {
         const client_search = algoliasearch(functions.config().algolia.appid, functions.config().algolia.searchkey);
         searchindex = client_search.initIndex('postings');
+        //let hits = await searchindex.search(searchQuery);
 
+        //return utils.handleSuccess(res, {entries: hits});
 
-        let hits = await searchindex.search(searchQuery);
-
-        return utils.handleSuccess(res, {entries: hits});
+        searchindex.search(searchQuery).then(({ hits }) => {
+            console.log(hits);
+            return utils.handleSuccess(res, hits);
+        });
 
     } catch (err) {
         return utils.handleServerError(res, err);
@@ -113,9 +117,14 @@ exports.getSearchProfiles = functions.https.onRequest(async (req, res) => {
         searchindex = client_search.initIndex('profiles');
 
 
-        let hits = await searchindex.search(searchQuery);
+        //let hits = await searchindex.search(searchQuery);
 
-        return utils.handleSuccess(res, {entries: hits});
+        //return utils.handleSuccess(res, {entries: hits});
+
+        searchindex.search(searchQuery).then(({ hits }) => {
+            console.log(hits);
+            return utils.handleSuccess(res, hits);
+        });
 
     } catch (err) {
         return utils.handleServerError(res, err);
