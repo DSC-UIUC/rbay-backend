@@ -252,7 +252,7 @@ exports.changePassword = functions.https.onRequest(async (req, res) => {
 exports.deleteUser = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
   res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS, DELETE');
   res.set('Access-Control-Allow-Headers', '*');
 
   if (req.method === "OPTIONS") {
