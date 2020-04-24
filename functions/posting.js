@@ -78,7 +78,33 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
     for (let postingRef of postingsRefArray) {
       let postingDoc = await postingRef.get();
       if (postingDoc.exists) {
-        data.push(postingDoc.data());
+        let { professor, ...postData } = postingDoc.data();
+
+        // setting the professor name in the posting data
+        let profUserRef = await professor.get();
+        let profProfileRef = await profUserRef.data()[CONSTS.PROFREF].get();
+        let professorName = profProfileRef.data()[CONSTS.NAME];
+        postData[CONSTS.PROFESSOR] = professorName;
+        postData[CONSTS.PROFESSOR_ID] = profUserRef.id;
+
+        // adding postingID to returned data
+        postData[CONSTS.ID] = postingDoc.id;
+
+        // setting applicant and selected_applicant fields
+        let cleanedApp = [];
+        for (appRef of postData[CONSTS.APPLICANTS]) {
+            cleanedApp.push(appRef.id);
+        }
+        postData[CONSTS.APPLICANTS] = cleanedApp;
+        let cleanedSelectedApp = [];
+        if (postData[CONSTS.SELECTED]) {
+            for (selectedAppRef of postData[CONSTS.SELECTED]) {
+                cleanedSelectedApp.push(selectedAppRef.id);
+            }
+        }
+        postData[CONSTS.SELECTED] = cleanedSelectedApp;
+
+        data.push(postData);
       }
     }
 
@@ -452,6 +478,72 @@ exports.getUserPostings = functions.https.onRequest(async (req, res) => {
     utils.handleServerError(res, err);
   }
 });
+
+
+exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) => {
+  // for manually handling POST/OPTIONS CORS policy
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+
+  if (req.method !== "POST") {
+    return utils.handleBadRequest(res, "Must be a POST request.");
+  }
+
+  if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("postingId"))) {
+    return utils.handleBadRequest(res, "Missing idToken or postingId.");
+  }
+
+  let postingId = req.body.postingId;
+  let idToken = req.body.idToken;
+  let decodedUid = await auth.verifyTokenWithAdmin(idToken);
+
+  if (decodedUid == null) {
+    return utils.handleBadRequest(res, "Token is invalid or expired.");
+  }
+
+  try {
+    let userDocRef = fb.db.collection("users").doc(decodedUid);
+    let userDoc = await userDocRef.get();
+    let userDocData = await userDoc.data();
+
+    if (!userDoc.exists) {
+      utils.handleServerError(res, "User does not exist.");
+      return;
+    }
+
+    // only allowing professors to select applicants
+    if (userDocData[CONSTS.IS_STUDENT]) {
+      utils.handleBadRequest(res, "Only professors can select applicants.");
+      return;
+    }
+
+    // checking to see if posting is in professors posting list
+    if (!(postingId in userDocData[CONSTS.POSTINGS])) {
+      utils.handleBadRequest(res, "Given professor did not create given posting");
+      return;
+    }
+
+    // checking to see if posting is still open
+    let postingDocRef = fb.db.collection("postings").doc(postingId);
+    let postingDoc = await postingDocRef.get();
+    if (!postingDoc.exists) {
+        utils.handleServerError(res, "Posting does not exist.");
+        return;
+    }
+    if (!postingDoc[CONSTS.IS_OPEN]) {
+      utils.handleServerError(res, "Posting is already closed");
+    }
+
+    // postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(userDocRef) });
+
+
+  } catch(err) {
+    utils.handleServerError(res, err);
+  }
+});
+
+
 
 exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy

@@ -22,59 +22,72 @@ exports.handleSuccess = (res, data) => {
 exports.verifyFieldsProfile = (is_student, body) => {
 
   var profile = {};
+
   if (is_student) {
-    if (CONSTS.NAME in body && typeof body[CONSTS.NAME] === 'string') {
-      profile[CONSTS.NAME] = body[CONSTS.NAME];
-    }
-    if (CONSTS.ABOUT_ME in body && typeof body[CONSTS.ABOUT_ME] === 'string') {
-      profile[CONSTS.ABOUT_ME] = body[CONSTS.ABOUT_ME];
-    }
+    // student profile
     if (CONSTS.GPA in body && body[CONSTS.GPA] > 0 && body[CONSTS.GPA] <= 4) {
-      profile[CONSTS.GPA] = body[CONSTS.GPA];
+      profile[CONSTS.GPA] = Number(body[CONSTS.GPA].toPrecision(3));
     }
-    if (CONSTS.MAJOR in body && Array.isArray(body[CONSTS.MAJOR])) {
-      profile[CONSTS.MAJOR] = body[CONSTS.MAJOR];
-    }
-    if (CONSTS.YEAR in body && body[CONSTS.YEAR] > 0 && body[CONSTS.YEAR] <= 5) {
+    if (CONSTS.YEAR in body && Number.isInteger(body[CONSTS.YEAR]) && body[CONSTS.YEAR] > 0 && body[CONSTS.YEAR] <= 5) {
       profile[CONSTS.YEAR] = body[CONSTS.YEAR];
     }
-    if (CONSTS.COURSES in body) {
-      profile[CONSTS.COURSES] = body[CONSTS.COURSES];
+    if (CONSTS.MAJOR in body && Array.isArray(body[CONSTS.MAJOR])) {
+      profile[CONSTS.MAJOR] = [];
+      for (major of body[CONSTS.MAJOR]) {
+        if (typeof major === 'string') {
+          profile[CONSTS.MAJOR].push(major);
+        }
+      }
     }
-    if (CONSTS.INTERESTS in body) {
-      profile[CONSTS.INTERESTS] = body[CONSTS.INTERESTS];
+    if (CONSTS.COURSES in body && Array.isArray(body[CONSTS.COURSES])) {
+      profile[CONSTS.COURSES] = [];
+      for (course of body[CONSTS.COURSES]) {
+        if (typeof course === 'string') {
+          profile[CONSTS.COURSES].push(course);
+        }
+      }
     }
-    if (CONSTS.EXP in body) {
-      profile[CONSTS.EXP] = body[CONSTS.EXP];
+    if (CONSTS.EXP in body && Array.isArray(body[CONSTS.EXP])) {
+      profile[CONSTS.EXP] = [];
+      for (exp of body[CONSTS.EXP]) {
+        if (typeof exp === 'object') {
+          profile[CONSTS.EXP].push(exp);
+        }
+      }
+    }
+    if (CONSTS.SKILLS in body && Array.isArray(body[CONSTS.SKILLS])) {
+      profile[CONSTS.SKILLS] = [];
+      for (skill of body[CONSTS.SKILLS]) {
+        if (typeof skill === 'string') {
+          profile[CONSTS.SKILLS].push(skill);
+        }
+      }
     }
   } else {
-    if (CONSTS.NAME in body && typeof body[CONSTS.NAME] === 'string') {
-      profile[CONSTS.NAME] = body[CONSTS.NAME];
-    }
-    if (CONSTS.ABOUT_ME in body && typeof body[CONSTS.ABOUT_ME] === 'string') {
-      profile[CONSTS.ABOUT_ME] = body[CONSTS.ABOUT_ME];
-    }
-    if (CONSTS.INTERESTS in body) {
-      profile[CONSTS.INTERESTS] = body[CONSTS.INTERESTS];
-    }
+    // professor profile
     if (CONSTS.DEPT in body && typeof body[CONSTS.DEPT] === 'string') {
       profile[CONSTS.DEPT] = body[CONSTS.DEPT];
     }
   }
+
+  // shared fields 
+  if (CONSTS.NAME in body && typeof body[CONSTS.NAME] === 'string') {
+    profile[CONSTS.NAME] = body[CONSTS.NAME];
+  }
+  if (CONSTS.ABOUT_ME in body && typeof body[CONSTS.ABOUT_ME] === 'string') {
+    profile[CONSTS.ABOUT_ME] = body[CONSTS.ABOUT_ME];
+  }
+  if (CONSTS.PIC in body && typeof body[CONSTS.PIC] === 'string') {
+    profile[CONSTS.PIC] = body[CONSTS.PIC];
+  }
+  if (CONSTS.INTERESTS in body && Array.isArray(body[CONSTS.INTERESTS])) {
+    profile[CONSTS.INTERESTS] = [];
+    for (interest of body[CONSTS.INTERESTS]) {
+      if (typeof interest === 'string') {
+        profile[CONSTS.INTERESTS].push(interest);
+      }
+    }
+  }
+
   return profile;
 }
-
-// const getProfileDataWithRef = async (profileDocRef) => {
-//   try {
-//     let profileDoc = await profileDocRef.get();
-//     if (profileDoc.exists) {
-//       return profileDoc.data();
-//     }
-//
-//     return null;
-//   } catch (err) {
-//     console.log(err);
-//     return null;
-//   }
-// }
-// exports.getProfileDataWithRef = getProfileDataWithRef;
