@@ -10,6 +10,7 @@ exports.RESEARCH = 'research';
 exports.DEPT = 'department';
 exports.PIC = 'picture';
 exports.SKILLS = 'skills';
+exports.WEBSITE = 'website';
 
 exports.UID = 'uid';
 exports.PROFREF = 'profile';
@@ -29,10 +30,10 @@ exports.DESCRIPTION = 'description';
 exports.REQUIREMENTS = 'requirements';
 exports.TAGS = 'tags';
 exports.PROFESSOR = 'professor';
+exports.PROFESSOR_NAME = 'professor_name';
 exports.APPLICANTS = 'applicants';
 exports.IS_OPEN = 'is_open';
-
-// TODO: clean up constants
-exports.PROFESSOR_NAME = 'professor_name';
 exports.PROFESSOR_ID = 'professor_id';
 exports.IS_SELECTED = 'is_selected';
+
+exports.CONFIG = 'rbay_config.json';

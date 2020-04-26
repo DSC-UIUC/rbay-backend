@@ -286,7 +286,7 @@ exports.getPostingById = functions.https.onRequest(async (req, res) => {
         return utils.handleBadRequest(res, 'Must be a GET request.');
     }
 
-    
+
     if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
         return;
@@ -322,8 +322,12 @@ exports.getPostingById = functions.https.onRequest(async (req, res) => {
 exports.deletePosting = functions.https.onRequest(async (req, res) => {
     // for manually handling POST/OPTIONS CORS policy
     res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+    res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS, DELETE');
     res.set('Access-Control-Allow-Headers', '*');
+
+    if (req.method === "OPTIONS") {
+      return res.end();
+    }
 
     if (req.method !== "DELETE") {
         return utils.handleBadRequest(res, 'Must be a DELETE request.');
@@ -378,10 +382,13 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
+    if (req.method === "OPTIONS") {
+      return res.end();
+    }
+  
     // Validity checking.
     if (req.method !== "POST") {
-        utils.handleBadRequest(res, "Must be a POST request.");
-        return;
+      return utils.handleBadRequest(res, "Must be a POST request.");
     }
 
     if (!req.body.hasOwnProperty("idToken") || typeof req.body["idToken"] !== 'string') {
@@ -402,20 +409,19 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
     if (decodedUid == null) {
-        utils.handleBadRequest(res, "Token is invalid or expired.");
-        return;
+      return utils.handleBadRequest(res, "Token is invalid or expired.");
     }
 
     // Find user creating posting.
     let userDocRef = fb.db.collection("users").doc(decodedUid);
     let userDoc = await userDocRef.get();
     if (!userDoc.exists) {
-        return utils.handleServerError(res, "User does not exist.");
+      return utils.handleServerError(res, "User does not exist.");
     }
 
     // Check to make sure user is not student.
     if (userDoc["_fieldsProto"][CONSTS.IS_STUDENT]["booleanValue"]) {
-        return utils.handleBadRequest(res, "Students cannot make postings.");
+      return utils.handleBadRequest(res, "Students cannot make postings.");
     }
 
     if (!await validateDataTypes(req.body, false)) {
@@ -428,28 +434,22 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.TITLE]: req.body[CONSTS.TITLE],
         [CONSTS.LAB_NAME]: req.body[CONSTS.LAB_NAME],
         [CONSTS.PROFESSOR]: userDocRef,
+        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
         [CONSTS.TAGS]: req.body[CONSTS.TAGS],
         [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME]
+        [CONSTS.APPLICANTS] : [],
+        [CONSTS.IS_OPEN]: true,
+        [CONSTS.REQUIREMENTS]: req.body.hasOwnProperty(CONSTS.REQUIREMENTS) ? req.body[CONSTS.REQUIREMENTS] : {}
     }
 
-    let requirements = {};
-    if (req.body.hasOwnProperty(CONSTS.REQUIREMENTS)) {
-        requirements = req.body[CONSTS.REQUIREMENTS];
+    try {
+      let postingDocRef = await fb.db.collection(CONSTS.POSTINGS).add(postingJson);
+      userDocRef.update({ "postings": FieldValue.arrayUnion(postingDocRef) });
+      return utils.handleSuccess(res, { "id": postingDocRef.id });
+    } catch (err) {
+      return utils.handleServerError(res, err);
     }
-
-    postingJson[CONSTS.REQUIREMENTS] = requirements;
-    postingJson[CONSTS.APPLICANTS] = [];
-    postingJson[CONSTS.IS_OPEN] = true;
-    fb.db.collection(CONSTS.POSTINGS).add(postingJson)
-        .then(function (postingDocRef) {
-            // Adding reference to user document.
-            userDocRef.update({ "postings": FieldValue.arrayUnion(postingDocRef) });
-            utils.handleSuccess(res, { "id": postingDocRef.id });
-        }).catch(function (error) {
-            utils.handleServerError(res, error);
-        });
-    return;
 });
 
 exports.getUserPostings = functions.https.onRequest(async (req, res) => {
@@ -487,7 +487,7 @@ exports.getUserPostings = functions.https.onRequest(async (req, res) => {
     let postingsRefArray = userDoc.data().postings;
     let data = await getUserPostingsWithRef(postingsRefArray);
 
-    utils.handleSuccess(res, data);
+    utils.handleSuccess(res, { entries: data });
   } catch (err) {
     utils.handleServerError(res, err);
   }
@@ -533,7 +533,7 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
     }
 
     // checking to see if posting is in professors posting list
-    if (!(postingId in userDocData[CONSTS.POSTINGS])) {
+    if (!(userDocData[CONSTS.POSTINGS].find(post => post.id === postingId))) {
       utils.handleBadRequest(res, "Given professor did not create given posting");
       return;
     }
@@ -545,13 +545,33 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
         utils.handleServerError(res, "Posting does not exist.");
         return;
     }
-    if (!postingDoc[CONSTS.IS_OPEN]) {
-      utils.handleServerError(res, "Posting is already closed");
+    let postingDocData = await postingDoc.data();
+    console.log(postingDocData);
+    if (!postingDocData[CONSTS.IS_OPEN]) {
+      utils.handleBadRequest(res, "Posting is already closed");
+      return;
     }
 
-    // postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(userDocRef) });
 
+    // checking applicant is already selected
+    // getting applicant user ref
+    let applicant_id = req.body.applicant;
+    let appUserRef = fb.db.collection("users").doc(applicant_id);
 
+    if (postingDocData[CONSTS.SELECTED].find(app => app.id === applicant_id)) {
+        utils.handleBadRequest(res, "Given Applicant is already selected");
+        return;
+    }
+    // checking if applicant has already applied
+    if (postingDocData[CONSTS.APPLICANTS].find(app => app.id === applicant_id)) {
+        postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(appUserRef) });
+        postingDocRef.update({ [CONSTS.APPLICANTS]: FieldValue.arrayRemove(appUserRef) });
+        utils.handleSuccess(res, "Applicant successfully selected");
+        return;
+    } else {
+        utils.handleBadRequest(res, "Given Applicant did not apply for this posting");
+        return;
+    }
   } catch(err) {
     utils.handleServerError(res, err);
   }

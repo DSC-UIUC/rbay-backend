@@ -25,20 +25,16 @@ exports.verifyFieldsProfile = (is_student, body) => {
 
   if (is_student) {
     // student profile
-    if (CONSTS.GPA in body && body[CONSTS.GPA] > 0 && body[CONSTS.GPA] <= 4) {
+    if (CONSTS.GPA in body && typeof body[CONSTS.GPA] === 'number' && body[CONSTS.GPA] > 0 && body[CONSTS.GPA] <= 4) {
       profile[CONSTS.GPA] = Number(body[CONSTS.GPA].toPrecision(3));
     }
     if (CONSTS.YEAR in body && Number.isInteger(body[CONSTS.YEAR]) && body[CONSTS.YEAR] > 0 && body[CONSTS.YEAR] <= 5) {
       profile[CONSTS.YEAR] = body[CONSTS.YEAR];
     }
-    if (CONSTS.MAJOR in body && Array.isArray(body[CONSTS.MAJOR])) {
-      profile[CONSTS.MAJOR] = [];
-      for (major of body[CONSTS.MAJOR]) {
-        if (typeof major === 'string') {
-          profile[CONSTS.MAJOR].push(major);
-        }
-      }
+    if (CONSTS.MAJOR in body && typeof body[CONSTS.MAJOR] == 'string') {
+      profile[CONSTS.MAJOR] = body[CONSTS.MAJOR];
     }
+    
     if (CONSTS.COURSES in body && Array.isArray(body[CONSTS.COURSES])) {
       profile[CONSTS.COURSES] = [];
       for (course of body[CONSTS.COURSES]) {
@@ -79,6 +75,9 @@ exports.verifyFieldsProfile = (is_student, body) => {
   }
   if (CONSTS.PIC in body && typeof body[CONSTS.PIC] === 'string') {
     profile[CONSTS.PIC] = body[CONSTS.PIC];
+  }
+  if (CONSTS.WEBSITE in body && typeof body[CONSTS.WEBSITE] === 'string') {
+    profile[CONSTS.WEBSITE] = body[CONSTS.WEBSITE];
   }
   if (CONSTS.INTERESTS in body && Array.isArray(body[CONSTS.INTERESTS])) {
     profile[CONSTS.INTERESTS] = [];

@@ -24,6 +24,7 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
     let data = {};
     data.idToken = response.data["idToken"];
+    data.expirationTimestamp = parseInt(response.data["expiresIn"]) + Math.round(Date.now() / 1000);
 
     let docRef = fb.db.collection("users").where("email", "==", email).limit(1);
     let querySnapshot = await docRef.get();
@@ -31,6 +32,7 @@ const signInWithIdentityToolkit = async (res, api_key, email, password) => {
 
     data.username = docData.username;
     data.is_student = docData.is_student;
+    data.email = docData.email;
 
     return utils.handleSuccess(res, data);
   } catch (err) {
@@ -153,13 +155,14 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.NAME]: "",
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.GPA]: -1,
-        [CONSTS.MAJOR]: [],
+        [CONSTS.MAJOR]: "",
         [CONSTS.YEAR]: -1,
         [CONSTS.COURSES]: [],
         [CONSTS.INTERESTS]: [],
         [CONSTS.EXP]: [],
         [CONSTS.PIC]: "",
-        [CONSTS.SKILLS]: []
+        [CONSTS.SKILLS]: [],
+        [CONSTS.WEBSITE]: ""
       };
     } else {
       profileJson = {
@@ -168,7 +171,8 @@ exports.signUp = functions.https.onRequest(async (req, res) => {
         [CONSTS.ABOUT_ME]: "",
         [CONSTS.INTERESTS]: [],
         [CONSTS.DEPT]: "",
-        [CONSTS.PIC]: ""
+        [CONSTS.PIC]: "",
+        [CONSTS.WEBSITE]: ""
       }
     }
 
@@ -248,7 +252,7 @@ exports.changePassword = functions.https.onRequest(async (req, res) => {
 exports.deleteUser = functions.https.onRequest(async (req, res) => {
   // for manually handling POST/OPTIONS CORS policy
   res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS, DELETE');
   res.set('Access-Control-Allow-Headers', '*');
 
   if (req.method === "OPTIONS") {
