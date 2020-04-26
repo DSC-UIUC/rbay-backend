@@ -368,8 +368,8 @@ Response Body `data` (200):
 ```
 
 <a name="createPosting" id="createPosting"></a>
-**POST /createPosting**
 
+**POST /createPosting**
 Creates a posting. Can only be used by users with professor status.
 
 Request body (JSON):
@@ -380,6 +380,7 @@ Request body (JSON):
   "title": [string],
   "lab_name": [string],
   "description": [string],
+  "professor_name": [string]
   "requirements": {
     "gpa": [float],
     "year": [string],
@@ -389,7 +390,7 @@ Request body (JSON):
 }
 ```
 
-`title`, `tags`, `description`, and `lab_name` are required.
+`title`, `tags`, `description`, `professor_name`, and `lab_name` are required.
 
 Response Body `data` (200):
 
@@ -434,12 +435,24 @@ Request body (JSON):
   "title": [string],
   "lab_name": [string],
   "description": [string],
+  "is_open" : [boolean],
+  "selected_applicants": [array of strings],
+  "applicants" : [array of applicant objects],
   "requirements": {
     "gpa": [float],
     "year": [string],
     "major": [array of strings],
     "coursework": [array of strings]
   }
+}
+```
+
+Applicant objects follow this format:
+
+```
+{
+  "id" : [string],
+  "is_selected": [boolean]
 }
 ```
 
@@ -451,8 +464,6 @@ Response Body `data` (200):
     "id" : [string]
 }
 ```
-
-`idToken` and `postingId` are required.
 
 
 <a name="selectapplicantforposting" id="selectapplicantforposting"></a>
@@ -476,9 +487,12 @@ Request Body (JSON):
 
 Adds student to list of applicants for a posting. Returns bad request if student has already applied to posting. Only students can apply to postings.
 
-Request Query (URL encoded parameters):
+Request Body (JSON):
 ```
-/applyToPosting?idToken=[string]&postingId=[string]
+{
+  "postingId": [string],
+  "idToken": [string]
+}
 ```
 
 `idToken` and `postingId` are required.
