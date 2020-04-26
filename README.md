@@ -13,7 +13,7 @@ The Research Bay project was built by student developers in Developer Student Cl
 // TODO add links to developers' websites and/or email?
 
 - [Keon Park](https://www.linkedin.com/in/parkkeo1/) - Lead Dev
-- Thomas Yang - Dev
+- [Thomas Yang](https://www.linkedin.com/in/tyang1780/) - Dev
 - Steven Pan - Dev
 - [Aditya Sriram](https://www.linkedin.com/in/sriramaditya/) - Dev
 - Kavi Ravuri - Mentor
@@ -358,10 +358,17 @@ Response Body `data` (200):
     "title"               : [string],
     "description"         : [string],
     "is_open"             : [boolean],
-    "applicants"          : [string array],
-    "selected_applicants" : [string array],
     "requirements"        : {...},
-    "tags"                : [string array]
+    "tags"                : [string array],
+    "applicants"          : [{
+          "is_selected" : [boolean],
+          "name"        : [string],
+          "year"        : [int],
+          "major"       : [string],
+          "id"          : [string]
+        },
+        {...}
+      ]
    },
    {...}
 ]
