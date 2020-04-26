@@ -6,7 +6,7 @@ const fb = require('./firebase.js');
 const auth = require('./auth.js');
 const FieldValue = require('firebase-admin').firestore.FieldValue;
 
-function validateDataTypes(body, selectedApplicantCheck) {
+function validateDataTypes(body) {
     // Requirements validation.
     if (CONSTS.REQUIREMENTS in body) {
         let requirements = body[CONSTS.REQUIREMENTS];
@@ -37,29 +37,14 @@ function validateDataTypes(body, selectedApplicantCheck) {
         }
     }
 
-    // Array-type validation (tags, applicant and selected applicants)
-    if (!Array.isArray(body[CONSTS.TAGS]) || //|| !Array.isArray(body[CONSTS.APPLICANTS]) ||
-        (selectedApplicantCheck && !Array.isArray(body[CONSTS.SELECTED_APPLICANTS]))) {
+    // Tags validation.
+    if (!Array.isArray(body[CONSTS.TAGS])) {
         return false;
     }
-
-    /*for (let i = 0; i < body[CONSTS.APPLICANTS].length; i++) {
-        if (typeof body[CONSTS.APPLICANTS][i] !== 'string') { // are we storing them as references or as strings?
-            return false;
-        }
-    }*/
 
     for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
         if (typeof body[CONSTS.TAGS][i] !== 'string') {
             return false;
-        }
-    }
-
-    if (selectedApplicantCheck) {
-        for (let i = 0; i < body[CONSTS.SELECTED_APPLICANTS].length; i++) {
-            if (typeof body[CONSTS.SELECTED_APPLICANTS][i] !== 'string') {
-                return false;
-            }
         }
     }
 
@@ -160,14 +145,17 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
 
     let currentApplicants = postingDoc.data()[CONSTS.APPLICANTS];
     for (i = 0; i < currentApplicants.length; i++) {
-        console.log(currentApplicants[i].id);
-        if (decodedUid == currentApplicants[i].id) {
+        console.log(currentApplicants[i]["uid"]);
+        if (decodedUid == currentApplicants[i]["uid"]) {
             utils.handleBadRequest(res, "Students cannot make multiple applications to the same posting.");
             return;
         }
     }
 
-    postingDocRef.update({ [CONSTS.APPLICANTS]: FieldValue.arrayUnion(userDocRef) });
+    // Add applicant to list of applicants.
+    postingDocRef.update({
+        [CONSTS.APPLICANTS]: FieldValue.arrayUnion({ "uid" : decodedUid, "is_selected" : false }),
+    });
     userDocRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayUnion(postingDocRef) });
     utils.handleSuccess(res, { "Success": decodedUid + " successfully applied to posting" });
     
@@ -195,9 +183,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
         !req.body.hasOwnProperty(CONSTS.TAGS) ||
-        !req.body.hasOwnProperty(CONSTS.SELECTED_APPLICANTS) ||
         !req.body.hasOwnProperty(CONSTS.IS_OPEN) ||
-        // !req.body.hasOwnProperty(CONSTS.APPLICANTS) ||
         !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME)) {
         utils.handleBadRequest(res, "Missing title, lab name, description, tags, professor name, " + 
             "selected applicant list, or status of posting.");
@@ -232,7 +218,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!validateDataTypes(req.body, true)) {
+    if (!validateDataTypes(req.body)) {
         utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
         return;
     }
@@ -244,8 +230,6 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.PROFESSOR]: userDocRef,
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
         [CONSTS.TAGS]: req.body[CONSTS.TAGS],
-        // [CONSTS.APPLICANTS]: req.body[CONSTS.APPLICANTS],
-        [CONSTS.SELECTED_APPLICANTS]: req.body[CONSTS.SELECTED_APPLICANTS],
         [CONSTS.IS_OPEN]: req.body[CONSTS.IS_OPEN],
         [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME]
     }
@@ -364,7 +348,6 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
-
     // Validity checking.
     if (req.method !== "POST") {
         utils.handleBadRequest(res, "Must be a POST request.");
@@ -405,7 +388,7 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         return utils.handleBadRequest(res, "Students cannot make postings.");
     }
 
-    if (!validateDataTypes(req.body, false)) {
+    if (!validateDataTypes(req.body)) {
         utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
         return;
     }
@@ -427,7 +410,6 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
 
     postingJson[CONSTS.REQUIREMENTS] = requirements;
     postingJson[CONSTS.APPLICANTS] = [];
-    postingJson[CONSTS.SELECTED_APPLICANTS] = [];
     postingJson[CONSTS.IS_OPEN] = true;
     fb.db.collection(CONSTS.POSTINGS).add(postingJson)
         .then(function (postingDocRef) {
