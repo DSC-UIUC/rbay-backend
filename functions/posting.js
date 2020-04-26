@@ -91,29 +91,27 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
       if (postingDoc.exists) {
         let { professor, ...postData } = postingDoc.data();
 
-        // setting the professor name in the posting data
-        let profUserRef = await professor.get();
-        let profProfileRef = await profUserRef.data()[CONSTS.PROFREF].get();
-        let professorName = profProfileRef.data()[CONSTS.NAME];
-        postData[CONSTS.PROFESSOR] = professorName;
-        postData[CONSTS.PROFESSOR_ID] = profUserRef.id;
+        // adding prof id
+        postData[CONSTS.PROFESSOR_ID] = professor.id;
 
         // adding postingID to returned data
         postData[CONSTS.ID] = postingDoc.id;
 
         // setting applicant and selected_applicant fields
-        let cleanedApp = [];
-        for (appRef of postData[CONSTS.APPLICANTS]) {
-            cleanedApp.push(appRef.id);
+        let appDetailed = [];
+        for (app of postData[CONSTS.APPLICANTS]) {
+            let appRef = await fb.db.collection("profiles").doc(app[CONSTS.ID]);
+            let appDoc = await appRef.get();
+            let { user, ...appData } = appDoc.data();
+            appDetailed.push({
+                [CONSTS.IS_SELECTED] : app[CONSTS.IS_SELECTED],
+                [CONSTS.NAME] : appData[CONSTS.NAME],
+                [CONSTS.YEAR] : appData[CONSTS.YEAR],
+                [CONSTS.MAJOR]: appData[CONSTS.MAJOR],
+                [CONSTS.ID]   : app[CONSTS.ID]
+            });
         }
-        postData[CONSTS.APPLICANTS] = cleanedApp;
-        let cleanedSelectedApp = [];
-        if (postData[CONSTS.SELECTED]) {
-            for (selectedAppRef of postData[CONSTS.SELECTED]) {
-                cleanedSelectedApp.push(selectedAppRef.id);
-            }
-        }
-        postData[CONSTS.SELECTED] = cleanedSelectedApp;
+        postData[CONSTS.APPLICANTS] = appDetailed;
 
         data.push(postData);
       }
