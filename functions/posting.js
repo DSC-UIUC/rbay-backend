@@ -132,6 +132,10 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
+
     // Validity checking.
     if (req.method !== "POST") {
         utils.handleBadRequest(res, "Must be a POST request.");
@@ -194,6 +198,10 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
+
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
 
     // Validity checking.
     if (req.method !== "POST") {
@@ -282,11 +290,14 @@ exports.getPostingById = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
+
     if (req.method !== "GET") {
         return utils.handleBadRequest(res, 'Must be a GET request.');
     }
 
-    
     if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
         return;
@@ -324,6 +335,10 @@ exports.deletePosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
+
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
 
     if (req.method !== "DELETE") {
         return utils.handleBadRequest(res, 'Must be a DELETE request.');
@@ -377,6 +392,10 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
+
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
 
     // Validity checking.
     if (req.method !== "POST") {
