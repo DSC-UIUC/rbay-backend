@@ -82,7 +82,7 @@ async function validateDataTypes(body, checkApplicants) {
         typeof body[CONSTS.PROFESSOR_NAME] === 'string';
 }
 
-const getUserPostingsWithRef = async (postingsRefArray) => {
+const getUserPostingsWithRef = async (postingsRefArray, is_student) => {
   let data = [];
 
   try {
@@ -98,20 +98,24 @@ const getUserPostingsWithRef = async (postingsRefArray) => {
         postData[CONSTS.ID] = postingDoc.id;
 
         // setting applicant and selected_applicant fields
-        let appDetailed = [];
-        for (app of postData[CONSTS.APPLICANTS]) {
-            let appRef = await fb.db.collection("profiles").doc(app[CONSTS.ID]);
-            let appDoc = await appRef.get();
-            let { user, ...appData } = appDoc.data();
-            appDetailed.push({
-                [CONSTS.IS_SELECTED] : app[CONSTS.IS_SELECTED],
-                [CONSTS.NAME] : appData[CONSTS.NAME],
-                [CONSTS.YEAR] : appData[CONSTS.YEAR],
-                [CONSTS.MAJOR]: appData[CONSTS.MAJOR],
-                [CONSTS.ID]   : app[CONSTS.ID]
-            });
+        if (is_student) {
+            delete postData[CONSTS.APPLICANTS];
+        } else {
+            let appDetailed = [];
+            for (app of postData[CONSTS.APPLICANTS]) {
+                let appRef = await fb.db.collection("profiles").doc(app[CONSTS.ID]);
+                let appDoc = await appRef.get();
+                let { user, ...appData } = appDoc.data();
+                appDetailed.push({
+                    [CONSTS.IS_SELECTED] : app[CONSTS.IS_SELECTED],
+                    [CONSTS.NAME] : appData[CONSTS.NAME],
+                    [CONSTS.YEAR] : appData[CONSTS.YEAR],
+                    [CONSTS.MAJOR]: appData[CONSTS.MAJOR],
+                    [CONSTS.ID]   : app[CONSTS.ID]
+                });
+            }
+            postData[CONSTS.APPLICANTS] = appDetailed;
         }
-        postData[CONSTS.APPLICANTS] = appDetailed;
 
         data.push(postData);
       }
@@ -493,8 +497,8 @@ exports.getUserPostings = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    let postingsRefArray = userDoc.data().postings;
-    let data = await getUserPostingsWithRef(postingsRefArray);
+    let postingsRefArray = userDoc.data()[CONSTS.POSTINGS];
+    let data = await getUserPostingsWithRef(postingsRefArray, userDoc.data()[CONSTS.IS_STUDENT]);
 
     utils.handleSuccess(res, { entries: data });
   } catch (err) {

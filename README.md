@@ -338,7 +338,7 @@ For professor user:
 <a name="getuserpostings" id="getuserpostings"></a>
 **GET /getUserPostings**
 
-Retrieves all the postings that a current user has created or applied to using their valid `idToken`. If `idToken` is invalid or expired, this call fails.
+Retrieves all the postings that a current user has created or applied to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. If the current user is a professor, they will receive information about the applicants. If the user is a student, they will not receive any information about the applicants.
 
 Request Query (URL encoded parameters):
 ```
