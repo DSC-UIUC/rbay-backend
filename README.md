@@ -380,7 +380,7 @@ Request body (JSON):
   "title": [string],
   "lab_name": [string],
   "description": [string],
-  "professor_name":[string]
+  "professor_name": [string]
   "requirements": {
     "gpa": [float],
     "year": [string],
@@ -424,7 +424,7 @@ Response Body `data` (200):
 
 **POST /updatePosting**
 
-Changes posting to contain values that are in the request body. Users can only update their own postings. Cannot change list of applicants.
+Changes posting to contain values that are in the request body. Users can only update their own postings.
 
 Request body (JSON):
 ```
@@ -436,13 +436,23 @@ Request body (JSON):
   "lab_name": [string],
   "description": [string],
   "is_open" : [boolean],
-  "selected_applicants": [array of strings]
+  "selected_applicants": [array of strings],
+  "applicants" : [array of applicant objects],
   "requirements": {
     "gpa": [float],
     "year": [string],
     "major": [array of strings],
     "coursework": [array of strings]
   }
+}
+```
+
+Applicant objects follow this format:
+
+```
+{
+  "id" : [string],
+  "is_selected": [boolean]
 }
 ```
 
@@ -454,8 +464,6 @@ Response Body `data` (200):
     "id" : [string]
 }
 ```
-
-`idToken` and `postingId` are required.
 
 
 <a name="selectapplicantforposting" id="selectapplicantforposting"></a>
