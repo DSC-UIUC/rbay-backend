@@ -33,7 +33,6 @@ exports.APPLICANTS = 'applicants';
 exports.IS_OPEN = 'is_open';
 
 // TODO: clean up constants
-exports.SELECTED_APPLICANTS = 'selected_applicants';
 exports.PROFESSOR_NAME = 'professor_name';
-exports.SELECTED = 'selected_applicants';
 exports.PROFESSOR_ID = 'professor_id';
+exports.IS_SELECTED = 'is_selected';

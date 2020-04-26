@@ -6,7 +6,7 @@ const fb = require('./firebase.js');
 const auth = require('./auth.js');
 const FieldValue = require('firebase-admin').firestore.FieldValue;
 
-function validateDataTypes(body) {
+async function validateDataTypes(body, checkApplicants) {
     // Requirements validation.
     if (CONSTS.REQUIREMENTS in body) {
         let requirements = body[CONSTS.REQUIREMENTS];
@@ -45,6 +45,32 @@ function validateDataTypes(body) {
     for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
         if (typeof body[CONSTS.TAGS][i] !== 'string') {
             return false;
+        }
+    }
+
+    // Applicant field check.
+    if (checkApplicants) {
+        if (!(CONSTS.APPLICANTS in body)) {
+            return false;
+        }
+
+        let applicantList = body[CONSTS.APPLICANTS];
+        for (let i = 0; i < applicantList.length; i++) {
+            let application = applicantList[i];
+            if (typeof application !== 'object' ||
+                !(CONSTS.ID in application) ||
+                !(CONSTS.IS_SELECTED in application) ||
+                Object.keys(application).length != 2 || 
+                typeof application[CONSTS.ID] !== 'string' ||
+                typeof application[CONSTS.IS_SELECTED] !== 'boolean') {
+                return false;
+            }
+
+            let userDocRef = fb.db.collection("users").doc(application[CONSTS.ID]);
+            let userDoc = await userDocRef.get();
+            if (!userDoc.exists) {
+                return false;
+            }
         }
     }
 
@@ -145,8 +171,8 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
 
     let currentApplicants = postingDoc.data()[CONSTS.APPLICANTS];
     for (i = 0; i < currentApplicants.length; i++) {
-        console.log(currentApplicants[i]["uid"]);
-        if (decodedUid == currentApplicants[i]["uid"]) {
+        console.log(currentApplicants[i][CONSTS.ID]);
+        if (decodedUid == currentApplicants[i][CONSTS.ID]) {
             utils.handleBadRequest(res, "Students cannot make multiple applications to the same posting.");
             return;
         }
@@ -154,7 +180,8 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
 
     // Add applicant to list of applicants.
     postingDocRef.update({
-        [CONSTS.APPLICANTS]: FieldValue.arrayUnion({ "uid" : decodedUid, "is_selected" : false }),
+        [CONSTS.APPLICANTS]: FieldValue.arrayUnion({
+            [CONSTS.ID]: decodedUid, [CONSTS.IS_SELECTED]: false }),
     });
     userDocRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayUnion(postingDocRef) });
     utils.handleSuccess(res, { "Success": decodedUid + " successfully applied to posting" });
@@ -174,8 +201,9 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId")) {
-        utils.handleBadRequest(res, "Missing idToken or postingId.");
+    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId") ||
+        typeof req.body["idToken"] !== 'string' || typeof req.body["postingId"] !== 'string') {
+        utils.handleBadRequest(res, "Missing idToken or postingId of string type.");
         return;
     }
 
@@ -184,9 +212,10 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
         !req.body.hasOwnProperty(CONSTS.TAGS) ||
         !req.body.hasOwnProperty(CONSTS.IS_OPEN) ||
-        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME)) {
+        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME) ||
+        !req.body.hasOwnProperty(CONSTS.APPLICANTS)) {
         utils.handleBadRequest(res, "Missing title, lab name, description, tags, professor name, " + 
-            "selected applicant list, or status of posting.");
+            "applicant list, or status of posting.");
         return;
     }
 
@@ -218,8 +247,8 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!validateDataTypes(req.body)) {
-        utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
+    if (!await validateDataTypes(req.body, true)) {
+        utils.handleBadRequest(res, "At least one field in the request is invalid.");
         return;
     }
 
@@ -231,7 +260,8 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
         [CONSTS.TAGS]: req.body[CONSTS.TAGS],
         [CONSTS.IS_OPEN]: req.body[CONSTS.IS_OPEN],
-        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME]
+        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
+        [CONSTS.APPLICANTS]: req.body[CONSTS.APPLICANTS]
     }
 
     let requirements = {};
@@ -241,7 +271,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
 
     // Updating posting document.
     postingJson[CONSTS.REQUIREMENTS] = requirements;
-    postingDocRef.update(postingJson);
+    postingDocRef.set(postingJson);
     utils.handleSuccess(res, { "id": postingDocRef.id })
     return;
 });
@@ -354,8 +384,8 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!req.body.hasOwnProperty("idToken")) {
-        utils.handleBadRequest(res, "Missing idToken.");
+    if (!req.body.hasOwnProperty("idToken") || typeof req.body["idToken"] !== 'string') {
+        utils.handleBadRequest(res, "Missing idToken of string type.");
         return;
     }
 
@@ -388,7 +418,7 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         return utils.handleBadRequest(res, "Students cannot make postings.");
     }
 
-    if (!validateDataTypes(req.body)) {
+    if (!await validateDataTypes(req.body, false)) {
         utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
         return;
     }
