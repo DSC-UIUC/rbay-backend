@@ -382,6 +382,23 @@ exports.deletePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
+    // Remove posting reference from professor user doc.
+    /*let profPostings = await userDoc.data()[CONSTS.POSTINGS];
+    let updatedProfPostings = []
+    for (let i = 0; i < profPostings.length; i++) {
+        if (profPostings[i].id !== req.query["postingId"]) {
+            updatedProfPostings.push(profPostings[i]);
+        }
+    }*/
+    userDocRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayRemove(postingDocRef) });
+
+    // Remove posting reference from all applicants' user doc.
+    let applicants = postingDoc.data()[CONSTS.APPLICANTS];
+    for (let i = 0; i < applicants.length; i++) {
+        let applicantRef = fb.db.collection("users").doc(applicants[i][CONSTS.ID]);
+        applicantRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayRemove(postingDocRef) });
+    }
+    
     postingDocRef.delete();
     console.log("Deleted posting.");
     return utils.handleSuccess(res, {'Success' : 'Deleted posting.'});
