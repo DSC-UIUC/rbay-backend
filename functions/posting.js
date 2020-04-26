@@ -6,6 +6,82 @@ const fb = require('./firebase.js');
 const auth = require('./auth.js');
 const FieldValue = require('firebase-admin').firestore.FieldValue;
 
+async function validateDataTypes(body, checkApplicants) {
+    // Requirements validation.
+    if (CONSTS.REQUIREMENTS in body) {
+        let requirements = body[CONSTS.REQUIREMENTS];
+        if ((CONSTS.GPA in requirements && typeof requirements[CONSTS.GPA] !== 'number') ||
+            (CONSTS.YEAR in requirements && typeof requirements[CONSTS.YEAR] !== 'number')) {
+            return false;
+        }
+
+        if ((CONSTS.MAJOR in requirements && !Array.isArray(requirements[CONSTS.MAJOR])) ||
+            (CONSTS.COURSES in requirements && !Array.isArray(requirements[CONSTS.COURSES]))) {
+            return false;
+        }
+
+        if (CONSTS.MAJOR in requirements) {
+            for (let i = 0; i < requirements[CONSTS.MAJOR].length; i++) {
+                if (typeof requirements[CONSTS.MAJOR][i] !== 'string') {
+                    return false;
+                }
+            }
+        }
+
+        if (CONSTS.COURSES in requirements) {
+            for (let i = 0; i < requirements[CONSTS.COURSES].length; i++) {
+                if (typeof requirements[CONSTS.COURSES][i] !== 'string') {
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Tags validation.
+    if (!Array.isArray(body[CONSTS.TAGS])) {
+        return false;
+    }
+
+    for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
+        if (typeof body[CONSTS.TAGS][i] !== 'string') {
+            return false;
+        }
+    }
+
+    // Applicant field check.
+    if (checkApplicants) {
+        if (!(CONSTS.APPLICANTS in body)) {
+            return false;
+        }
+
+        let applicantList = body[CONSTS.APPLICANTS];
+        for (let i = 0; i < applicantList.length; i++) {
+            let application = applicantList[i];
+            if (typeof application !== 'object' ||
+                !(CONSTS.ID in application) ||
+                !(CONSTS.IS_SELECTED in application) ||
+                Object.keys(application).length != 2 || 
+                typeof application[CONSTS.ID] !== 'string' ||
+                typeof application[CONSTS.IS_SELECTED] !== 'boolean') {
+                return false;
+            }
+
+            let userDocRef = fb.db.collection("users").doc(application[CONSTS.ID]);
+            let userDoc = await userDocRef.get();
+            if (!userDoc.exists) {
+                return false;
+            }
+        }
+    }
+
+    // Remaining field check.
+    return typeof body[CONSTS.DESCRIPTION] === 'string' &&
+        typeof body[CONSTS.LAB_NAME] === 'string' &&
+        typeof body[CONSTS.TITLE] === 'string' &&
+        (!(CONSTS.IS_OPEN in body) || typeof body[CONSTS.IS_OPEN] === 'boolean') &&
+        typeof body[CONSTS.PROFESSOR_NAME] === 'string';
+}
+
 const getUserPostingsWithRef = async (postingsRefArray) => {
   let data = [];
 
@@ -56,18 +132,22 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
+
     // Validity checking.
     if (req.method !== "POST") {
         utils.handleBadRequest(res, "Must be a POST request.");
         return;
     }
 
-    if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
+    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
         return;
     }
 
-    let idToken = req.query.idToken;
+    let idToken = req.body.idToken;
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
     if (decodedUid == null) {
@@ -90,20 +170,26 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
     }
 
     // Find document to be updated.
-    let postingDocRef = fb.db.collection("postings").doc(req.query["postingId"]);
+    let postingDocRef = fb.db.collection("postings").doc(req.body["postingId"]);
     let postingDoc = await postingDocRef.get();
 
     let currentApplicants = postingDoc.data()[CONSTS.APPLICANTS];
     for (i = 0; i < currentApplicants.length; i++) {
-        console.log(currentApplicants[i].id);
-        if (decodedUid == currentApplicants[i].id) {
+        console.log(currentApplicants[i][CONSTS.ID]);
+        if (decodedUid == currentApplicants[i][CONSTS.ID]) {
             utils.handleBadRequest(res, "Students cannot make multiple applications to the same posting.");
             return;
         }
     }
 
-    postingDocRef.update({ [CONSTS.APPLICANTS]: FieldValue.arrayUnion(userDocRef) });
+    // Add applicant to list of applicants.
+    postingDocRef.update({
+        [CONSTS.APPLICANTS]: FieldValue.arrayUnion({
+            [CONSTS.ID]: decodedUid, [CONSTS.IS_SELECTED]: false }),
+    });
+    userDocRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayUnion(postingDocRef) });
     utils.handleSuccess(res, { "Success": decodedUid + " successfully applied to posting" });
+    
     return;
 });
 
@@ -113,14 +199,19 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
+
     // Validity checking.
     if (req.method !== "POST") {
         utils.handleBadRequest(res, "Must be a POST request.");
         return;
     }
 
-    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId")) {
-        utils.handleBadRequest(res, "Missing idToken or postingId.");
+    if (!req.body.hasOwnProperty("idToken") || !req.body.hasOwnProperty("postingId") ||
+        typeof req.body["idToken"] !== 'string' || typeof req.body["postingId"] !== 'string') {
+        utils.handleBadRequest(res, "Missing idToken or postingId of string type.");
         return;
     }
 
@@ -128,9 +219,10 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
         !req.body.hasOwnProperty(CONSTS.TAGS) ||
-        !req.body.hasOwnProperty(CONSTS.APPLICANTS) ||
-        !req.body.hasOwnProperty(CONSTS.IS_OPEN)) {
-        utils.handleBadRequest(res, "Missing title, lab name, or description, tags, " +
+        !req.body.hasOwnProperty(CONSTS.IS_OPEN) ||
+        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME) ||
+        !req.body.hasOwnProperty(CONSTS.APPLICANTS)) {
+        utils.handleBadRequest(res, "Missing title, lab name, description, tags, professor name, " + 
             "applicant list, or status of posting.");
         return;
     }
@@ -163,6 +255,11 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
+    if (!await validateDataTypes(req.body, true)) {
+        utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
+        return;
+    }
+
     // Constructing posting document.
     let postingJson = {
         [CONSTS.TITLE]: req.body[CONSTS.TITLE],
@@ -170,6 +267,8 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.PROFESSOR]: userDocRef,
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
         [CONSTS.TAGS]: req.body[CONSTS.TAGS],
+        [CONSTS.IS_OPEN]: req.body[CONSTS.IS_OPEN],
+        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
         [CONSTS.APPLICANTS]: req.body[CONSTS.APPLICANTS]
     }
 
@@ -191,10 +290,13 @@ exports.getPostingById = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
 
+    if (req.method === "OPTIONS") {
+        return res.end();
+    }
+
     if (req.method !== "GET") {
         return utils.handleBadRequest(res, 'Must be a GET request.');
     }
-
 
     if (!req.query.hasOwnProperty("idToken") || !req.query.hasOwnProperty("postingId")) {
         utils.handleBadRequest(res, "Missing idToken or postingId.");
@@ -235,7 +337,7 @@ exports.deletePosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Headers', '*');
 
     if (req.method === "OPTIONS") {
-      return res.end();
+        return res.end();
     }
 
     if (req.method !== "DELETE") {
@@ -292,23 +394,26 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Headers', '*');
 
     if (req.method === "OPTIONS") {
-      return res.end();
+        return res.end();
     }
-
+  
     // Validity checking.
     if (req.method !== "POST") {
       return utils.handleBadRequest(res, "Must be a POST request.");
     }
 
-    if (!req.body.hasOwnProperty("idToken")) {
-      return utils.handleBadRequest(res, "Missing idToken.");
+    if (!req.body.hasOwnProperty("idToken") || typeof req.body["idToken"] !== 'string') {
+        utils.handleBadRequest(res, "Missing idToken of string type.");
+        return;
     }
 
     if (!req.body.hasOwnProperty(CONSTS.DESCRIPTION) ||
         !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
+        !req.body.hasOwnProperty(CONSTS.TAGS) ||
         !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME)) {
-      return utils.handleBadRequest(res, "Missing title, lab name, professor name, or description.");
+        utils.handleBadRequest(res, "Missing title, lab name, description, professor name, or tags.");
+        return;
     }
 
     let idToken = req.body.idToken;
@@ -330,6 +435,11 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
       return utils.handleBadRequest(res, "Students cannot make postings.");
     }
 
+    if (!await validateDataTypes(req.body, false)) {
+        utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
+        return;
+    }
+
     // Constructing posting document.
     let postingJson = {
         [CONSTS.TITLE]: req.body[CONSTS.TITLE],
@@ -337,9 +447,9 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         [CONSTS.PROFESSOR]: userDocRef,
         [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
         [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
-        [CONSTS.TAGS]: req.body.hasOwnProperty(CONSTS.TAGS) ? req.body[CONSTS.TAGS] : [],
+        [CONSTS.TAGS]: req.body[CONSTS.TAGS],
+        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
         [CONSTS.APPLICANTS] : [],
-        [CONSTS.SELECTED] : [],
         [CONSTS.IS_OPEN]: true,
         [CONSTS.REQUIREMENTS]: req.body.hasOwnProperty(CONSTS.REQUIREMENTS) ? req.body[CONSTS.REQUIREMENTS] : {}
     }

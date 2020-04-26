@@ -33,7 +33,7 @@ exports.PROFESSOR = 'professor';
 exports.PROFESSOR_NAME = 'professor_name';
 exports.APPLICANTS = 'applicants';
 exports.IS_OPEN = 'is_open';
-exports.SELECTED = 'selected_applicants';
 exports.PROFESSOR_ID = 'professor_id';
+exports.IS_SELECTED = 'is_selected';
 
 exports.CONFIG = 'rbay_config.json';
