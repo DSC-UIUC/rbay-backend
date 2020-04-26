@@ -15,7 +15,7 @@ The Research Bay project was built by student developers in Developer Student Cl
 - [Keon Park](https://www.linkedin.com/in/parkkeo1/) - Lead Dev
 - Thomas Yang - Dev
 - Steven Pan - Dev
-- Aditya Sriram - Dev
+- [Aditya Sriram](https://www.linkedin.com/in/sriramaditya/) - Dev
 - Kavi Ravuri - Mentor
 
 ---
