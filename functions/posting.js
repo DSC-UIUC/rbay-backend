@@ -248,7 +248,7 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
     }
 
     if (!await validateDataTypes(req.body, true)) {
-        utils.handleBadRequest(res, "At least one field in the request is invalid.");
+        utils.handleBadRequest(res, "At least one field in the request has a bad data type.");
         return;
     }
 
@@ -394,7 +394,7 @@ exports.createPosting = functions.https.onRequest(async (req, res) => {
         !req.body.hasOwnProperty(CONSTS.TITLE) ||
         !req.body.hasOwnProperty(CONSTS.TAGS) ||
         !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME)) {
-        utils.handleBadRequest(res, "Missing title, lab name, or description, professor name, or tags.");
+        utils.handleBadRequest(res, "Missing title, lab name, description, professor name, or tags.");
         return;
     }
 
