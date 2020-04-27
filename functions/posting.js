@@ -177,7 +177,6 @@ exports.applyToPosting = functions.https.onRequest(async (req, res) => {
 
     let currentApplicants = postingDoc.data()[CONSTS.APPLICANTS];
     for (i = 0; i < currentApplicants.length; i++) {
-        console.log(currentApplicants[i][CONSTS.ID]);
         if (decodedUid == currentApplicants[i][CONSTS.ID]) {
             utils.handleBadRequest(res, "Students cannot make multiple applications to the same posting.");
             return;
@@ -384,8 +383,7 @@ exports.deletePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    postingDocRef.delete();
-    console.log("Deleted posting.");
+    utils.deletePostingAndReferences(postingDocRef, decodedUid);
     return utils.handleSuccess(res, {'Success' : 'Deleted posting.'});
 });
 

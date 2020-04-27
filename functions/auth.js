@@ -3,7 +3,7 @@ const axios = require('axios');
 const CONSTS = require('./constants.js');
 const utils = require('./utils.js');
 const fb = require('./firebase.js');
-
+const FieldValue = require('firebase-admin').firestore.FieldValue;
 const api_key = functions.config().api.key;
 
 
@@ -274,11 +274,22 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
   }
 
   try {
-    let result = await fb.admin.auth().deleteUser(decodedUid);
+      let result = await fb.admin.auth().deleteUser(decodedUid);
 
-    let userDocRef = fb.db.collection("users").doc(decodedUid);
-    let userDoc = await userDocRef.get();
-    let profileDocRef = userDoc.data().profile;
+      let userDocRef = fb.db.collection("users").doc(decodedUid);
+      let userDoc = await userDocRef.get();
+      let profileDocRef = userDoc.data().profile;
+      let postings = await userDoc.data().postings;
+      if (!(await userDoc.data().is_student)) {
+          for (let i = 0; i < postings.length; i++) {
+              await utils.deletePostingAndReferences(postings[i], decodedUid);
+          }
+      } else {
+          for (let i = 0; i < postings.length; i++) {
+              postings[i].update({ [CONSTS.APPLICANTS]: FieldValue.arrayRemove({ [CONSTS.ID]: decodedUid, [CONSTS.IS_SELECTED]: false }) });
+              postings[i].update({ [CONSTS.APPLICANTS]: FieldValue.arrayRemove({ [CONSTS.ID]: decodedUid, [CONSTS.IS_SELECTED]: true }) });
+          }
+      }
 
     userDocRef.delete();
     profileDocRef.delete();

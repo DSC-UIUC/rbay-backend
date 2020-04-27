@@ -1,4 +1,6 @@
 const CONSTS = require('./constants.js');
+const FieldValue = require('firebase-admin').firestore.FieldValue;
+const fb = require('./firebase.js');
 
 exports.handleBadRequest = (res, msg) => {
   return res.status(400).send({
@@ -89,4 +91,21 @@ exports.verifyFieldsProfile = (is_student, body) => {
   }
 
   return profile;
+}
+
+exports.deletePostingAndReferences = async (postingDocRef, uid) => {
+    let postingDoc = await postingDocRef.get();
+    let userDocRef = fb.db.collection("users").doc(uid);
+    // Remove posting reference from professor user doc.
+    userDocRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayRemove(postingDocRef) });
+
+    // Remove posting reference from all applicants' user doc.
+    let applicants = postingDoc.data()[CONSTS.APPLICANTS];
+    for (let i = 0; i < applicants.length; i++) {
+        let applicantRef = fb.db.collection("users").doc(applicants[i][CONSTS.ID]);
+        applicantRef.update({ [CONSTS.POSTINGS]: FieldValue.arrayRemove(postingDocRef) });
+    }
+
+    postingDocRef.delete();
+    console.log("Deleted posting.");
 }
