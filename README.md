@@ -495,6 +495,7 @@ Response Body `data` (200):
 
 <a name="createPosting" id="createPosting"></a>
 **POST /createPosting**
+
 Creates a posting. Can only be used by users with professor status.
 
 Request body (JSON):
