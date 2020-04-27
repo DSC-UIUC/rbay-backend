@@ -346,7 +346,7 @@ For professor user:
 
 Updates the current user's profile with the given profile data using their valid `idToken`. If `idToken` is invalid or expired, this call fails. The parameters that will be updated depend on whether the user is a student or a professor. On sucess, this endpoint will return the updated profile in the same format as [/getProfile](#getprofile) endpoint.
 
-Each profile parameter will be optional in the request body. Year will be an integer 1-5, meaning Freshmen-Graduate. Major will be array of strings in case of multiple majors
+Each profile parameter will be optional in the request body. Year will be an integer 1-5, meaning Freshmen-Graduate. Major will be array of strings in case of multiple majors.
 
 Request Body (JSON):
 ```
@@ -355,6 +355,11 @@ Request Body (JSON):
   profileFields...
 }
 ```
+
+`idToken` is required.
+
+Response Body `data` (200):
+
 For student user:
 ```
   "about_me" : [string],
@@ -387,6 +392,29 @@ For professor user:
   "research_interests": [string array]
 ```
 
+<a name="getprofilefilesignedurl" id="getprofilefilesignedurl"></a>
+**POST /getProfileFileSignedUrl**
+
+Generates and returns a signed URL that can be used to store a user's file with `name` (i.e. a profile picture or resume) to a location in Firebase Cloud Storage, depending on the file's `type`. 
+
+After receiving the signed URL, the client must send a PUT request to this URL with the file `Blob` or `File` object as the data to actually upload the file to Cloud Storage.
+
+Request Body (JSON):
+```
+{
+  "idToken" : [string],
+  "type": [string], // can be "resume" or "picture"
+  "contentType": [string], // ex. application/pdf, image/*, etc
+  "name": [string], 
+}
+```
+
+All fields are required.
+
+Response Body `data` (200):
+```
+"data": [string array] // data[0] contains the signed URL
+```
 
 ---
 
@@ -466,7 +494,6 @@ Response Body `data` (200):
 ```
 
 <a name="createPosting" id="createPosting"></a>
-
 **POST /createPosting**
 Creates a posting. Can only be used by users with professor status.
 
@@ -499,7 +526,6 @@ Response Body `data` (200):
 ```
 
 <a name="applyToPosting" id="applyToPosting"></a>
-
 **POST /applyToPosting**
 
 Adds student to list of applicants for a posting. Returns bad request if student has already applied to posting. Only students can apply to postings.
@@ -520,6 +546,28 @@ Response Body `data` (200):
 "data" : {
         "Success": [string]
     }
+```
+
+<a name="selectapplicantforposting" id="selectapplicantforposting"></a>
+**POST /selectApplicantForPosting**
+
+Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting.
+
+Request Body (JSON):
+
+```
+{
+  "idToken" : [string],
+  "postingId" : [string],
+  "applicant" : [string] // the applicant's uid
+}
+```
+
+All fields are required.
+
+Response Body `data` (200):
+```
+"data" : "Applicant successfully selected"
 ```
 
 <a name="updatePosting" id="updatePosting"></a>
@@ -566,21 +614,6 @@ Response Body `data` (200):
 }
 ```
 
-<a name="selectapplicantforposting" id="selectapplicantforposting"></a>
-**POST /selectApplicantForPosting**
-
-Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting. This will move the applicant from the postings applicants field to selected_applicants field.
-
-Request Body (JSON):
-
-```
-{
-  "idToken" : [string],
-  "postingId" : [string],
-  "applicant" : [string]
-}
-```
-
 <a name="closePosting" id="closePosting"></a>
 **POST /closePosting**
 
@@ -621,3 +654,37 @@ Response Body `data` (200):
         "Success": [string]
     }
 ```
+
+---
+
+<a name="searchandrecommendations" id="searchandrecommendations"></a>
+### Search & Recommendations
+
+<br />
+
+<a name="getuserrecommendations" id="getuserrecommendations"></a>
+**GET /getUserRecommendations**
+
+// TODO
+
+<a name="getsearchpostings" id="getsearchpostings"></a>
+**GET /getSearchPostings**
+
+// TODO
+
+<a name="getsearchpostings" id="getsearchpostings"></a>
+**GET /getSearchProfiles**
+
+// TODO
+
+---
+
+<a name="misc" id="misc"></a>
+### Misc
+
+<br />
+
+<a name="getconfig" id="getconfig"></a>
+**GET /getConfig**
+
+// TODO
