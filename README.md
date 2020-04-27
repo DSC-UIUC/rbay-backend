@@ -129,7 +129,9 @@ Response Body `data` (200):
 "data": {
   "idToken" : [string],
   "username" : [string],
-  "is_student": [boolean]
+  "is_student": [boolean],
+  "expirationTimestamp": [int],
+  "email" : [string]
 }
 ```
 
@@ -156,7 +158,9 @@ Response Body `data` (200):
 "data": {
   "idToken" : [string],
   "username" : [string],
-  "is_student": [boolean]
+  "is_student": [boolean],
+  "expirationTimestamp": [int],
+  "email" : [string]
 }
 ```
 
@@ -240,6 +244,7 @@ For student user:
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "website" : [string],
   "experience": [
     {
       "title": [string],
@@ -255,6 +260,7 @@ For professor user:
 ```
 "data": {
   "about_me" : [string],
+  "website" : [string],
   "name": [string],
   "picture": [string],
   "coursework": [string array],
@@ -287,6 +293,7 @@ For student user:
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "website" : [string],
   "picture": [string],
   "experience": [
     {
@@ -303,6 +310,7 @@ For professor user:
 ```
 "data": {
   "about_me" : [string],
+  "website" : [string],
   "name": [string],
   "picture": [string],
   "coursework": [string array],
@@ -334,6 +342,7 @@ For student user:
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "website" : [string],
   "picture": [string],
   "experience": [
     {
@@ -348,6 +357,7 @@ For student user:
 For professor user:
 ```
   "about_me" : [string],
+  "website" : [string],
   "name": [string],
   "coursework": [string array],
   "picture": [string],
@@ -505,7 +515,6 @@ Request body (JSON):
   "lab_name": [string],
   "description": [string],
   "is_open" : [boolean],
-  "selected_applicants": [array of strings],
   "applicants" : [array of applicant objects],
   "requirements": {
     "gpa": [float],
