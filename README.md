@@ -42,8 +42,15 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 
 [Posting](#posting)
 - [/getUserPostings](#getuserpostings)
-- [/selectApplicantForPosting](#selectapplicantforposting)
+- [/getPostingById](#getPostingById)
 - [/getUserRecommendations](#getuserrecommendations)
+- [/createPosting](#createPosting)
+- [/applyToPosting](#applyToPosting)
+- [/selectApplicantForPosting](#selectapplicantforposting)
+- [/updatePosting](#updatePosting)
+- [/closePosting](#closePosting)
+- [/deletePosting](#deletePosting)
+
 
 // TODO add more
 
@@ -367,6 +374,37 @@ Response Body `data` (200):
 ]
 ```
 
+<a name="getPostingById" id="getPostingById"></a>
+**GET /getPostingById**
+
+Retrieves posting. If the user making this request is different from the original poster, the response body will not contain the list of applicants.
+
+Request Query (URL encoded parameters):
+```
+/getPostingById?idToken=[string]&postingId=[string]
+```
+
+`idToken` and `postingId` are required.
+
+Response Body `data` (200):
+
+```
+"data" : {
+    "requirements": {
+        "gpa": [float],
+        "year": [string],
+        "major": [array of strings],
+        "coursework": [array of strings]
+    },
+    "professor": [reference],
+    "tags": [array of strings],
+    "title": [string],
+    "lab_name": [string],
+    "description": [string],
+    "applicants" : [array of references (only appears if original poster is one making request)]
+}
+```
+
 <a name="createPosting" id="createPosting"></a>
 **POST /createPosting**
 
@@ -400,14 +438,18 @@ Response Body `data` (200):
     }
 ```
 
-<a name="deletePosting" id="deletePosting"></a>
-**DELETE /deletePosting**
+<a name="applyToPosting" id="applyToPosting"></a>
 
-Deletes posting, removing all references to the posting document in the users database. Only the user that created a given posting can delete it.
+**POST /applyToPosting**
 
-Request Query (URL encoded parameters):
+Adds student to list of applicants for a posting. Returns bad request if student has already applied to posting. Only students can apply to postings.
+
+Request Body (JSON):
 ```
-/deletePosting?idToken=[string]&postingId=[string]
+{
+  "postingId": [string],
+  "idToken": [string]
+}
 ```
 
 `idToken` and `postingId` are required.
@@ -465,7 +507,6 @@ Response Body `data` (200):
 }
 ```
 
-
 <a name="selectapplicantforposting" id="selectapplicantforposting"></a>
 **POST /selectApplicantForPosting**
 
@@ -479,30 +520,6 @@ Request Body (JSON):
   "postingId" : [string],
   "applicant" : [string]
 }
-```
-
-<a name="applyToPosting" id="applyToPosting"></a>
-
-**POST /applyToPosting**
-
-Adds student to list of applicants for a posting. Returns bad request if student has already applied to posting. Only students can apply to postings.
-
-Request Body (JSON):
-```
-{
-  "postingId": [string],
-  "idToken": [string]
-}
-```
-
-`idToken` and `postingId` are required.
-
-Response Body `data` (200):
-
-```
-"data" : {
-        "Success": [string]
-    }
 ```
 
 <a name="closePosting" id="closePosting"></a>
@@ -526,14 +543,14 @@ Response Body `data` (200):
     }
 ```
 
-<a name="getPostingById" id="getPostingById"></a>
-**GET /getPostingById**
+<a name="deletePosting" id="deletePosting"></a>
+**DELETE /deletePosting**
 
-Retrieves posting. If the user making this request is different from the original poster, the response body will not contain the list of applicants.
+Deletes posting, removing all references to the posting document in the users database. Only the user that created a given posting can delete it.
 
 Request Query (URL encoded parameters):
 ```
-/getPostingById?idToken=[string]&postingId=[string]
+/deletePosting?idToken=[string]&postingId=[string]
 ```
 
 `idToken` and `postingId` are required.
@@ -542,17 +559,6 @@ Response Body `data` (200):
 
 ```
 "data" : {
-    "requirements": {
-        "gpa": [float],
-        "year": [string],
-        "major": [array of strings],
-        "coursework": [array of strings]
-    },
-    "professor": [reference],
-    "tags": [array of strings],
-    "title": [string],
-    "lab_name": [string],
-    "description": [string],
-    "applicants" : [array of references (only appears if original poster is one making request)]
-}
+        "Success": [string]
+    }
 ```
