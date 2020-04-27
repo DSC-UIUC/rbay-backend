@@ -51,7 +51,7 @@ The rest of this README contains the documentation for all current API endpoints
 
 Please read the documentation in full before invoking any endpoints for development, testing, or use.
 
-All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions.net. Note that the endpoints use HTTPS to protect sensitive user information. Current endpoints are listed below:
+All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions.net. Note that the endpoints use HTTPS to protect sensitive user information. Current endpoints are listed below. Cloud functions that use DB or other event triggers are not included in this list.
 
 [Authentication](#auth)
 - [/signUp](#signup)
@@ -64,17 +64,25 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 - [/getProfile](#getprofile)
 - [/getProfileById](#getprofilebyid)
 - [/setProfile](#setprofile)
+- [/getProfileFileSignedUrl](#getprofilefilesignedurl)
 
 [Posting](#posting)
 - [/getUserPostings](#getuserpostings)
 - [/getPostingById](#getPostingById)
-- [/getUserRecommendations](#getuserrecommendations)
 - [/createPosting](#createPosting)
 - [/applyToPosting](#applyToPosting)
 - [/selectApplicantForPosting](#selectapplicantforposting)
 - [/updatePosting](#updatePosting)
 - [/closePosting](#closePosting)
 - [/deletePosting](#deletePosting)
+
+[Search & Recommendations](#searchandrecommendations)
+- [/getUserRecommendations](#getuserrecommendations)
+- [/getSearchPostings](#getsearchpostings)
+- [/getSearchProfiles[(#getsearchprofiles)
+
+[Misc](#misc)
+- [/getConfig](#getconfig)
 
 
 ### Success and Error API responses
@@ -202,6 +210,13 @@ Request Body (JSON):
 }
 ```
 
+All fields are required.
+
+Response Body `data` (200):
+```
+"data": "Password updated."
+```
+
 <a name="deleteuser" id="deleteuser"></a>
 **DELETE /deleteUser**
 
@@ -210,6 +225,13 @@ Deletes the current user using their valid `idToken`. If `idToken` is invalid or
 Request Query (URL encoded parameters):
 ```
 /deleteProfile?idToken=[string]
+```
+
+`idToken` is required.
+
+Response Body `data` (200):
+```
+"data": {}
 ```
 
 ---
