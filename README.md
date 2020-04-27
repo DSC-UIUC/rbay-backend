@@ -671,12 +671,99 @@ Response Body `data` (200):
 <a name="getsearchpostings" id="getsearchpostings"></a>
 **GET /getSearchPostings**
 
-// TODO
+Retrieves all the postings that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a student user can search for postings.
 
-<a name="getsearchpostings" id="getsearchpostings"></a>
+Request Query (URL encoded parameters):
+```
+/getSearchPostings?idToken=[string]&searchQuery=[string]
+```
+
+`idToken` and `searchQuery` is required.
+
+Response Body `data` (200):
+
+```
+"data" : [
+   {
+    "data": {
+    "about_me" : [string],
+    "picture": [string],
+    "year" : [int],
+    "gpa": [float],
+    "major": [string],
+    "name": [string],
+    "research_interests": [string array],
+    "coursework": [string array],
+    "skills": [string array],
+    "website" : [string],
+    "experience": [
+      {
+        "title": [string],
+        "company": [string],
+        "description": [string]
+      },
+      {...}
+    ]
+    }
+   },
+   "objectID": [string],
+   "_highlightResult": {
+     "data": {
+       {...}
+     }
+   },
+   {...}
+]
+```
+
+---
+
+<a name="getsearchprofiles" id="getsearchprofiles"></a>
 **GET /getSearchProfiles**
 
-// TODO
+Retrieves all the profiles that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a professor user can search for profiles.
+
+Request Query (URL encoded parameters):
+```
+/getSearchProfiles?idToken=[string]&searchQuery=[string]
+```
+
+`idToken` and `searchQuery` is required.
+
+Response Body `data` (200):
+
+```
+
+"data" : [
+   {
+    "data" : {
+    "lab_name"            : [string],
+    "professor"           : [string],
+    "professor_id"        : [string],
+    "title"               : [string],
+    "description"         : [string],
+    "is_open"             : [boolean],
+    "requirements"        : {...},
+    "tags"                : [string array],
+    "applicants"          : [{
+          "is_selected" : [boolean],
+          "name"        : [string],
+          "year"        : [int],
+          "major"       : [string],
+          "id"          : [string]
+        },
+        {...}
+      ]
+   },
+   "objectID": [string],
+   "_highlightResult": {
+     "data": {
+       {...}
+     }
+   },
+   {...}
+]
+```
 
 ---
 
