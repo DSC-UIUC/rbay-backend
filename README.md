@@ -403,7 +403,7 @@ Response Body `data` (200):
 <a name="deletePosting" id="deletePosting"></a>
 **DELETE /deletePosting**
 
-Deletes posting. Only the user that created a given posting can delete it.
+Deletes posting, removing all references to the posting document in the users database. Only the user that created a given posting can delete it.
 
 Request Query (URL encoded parameters):
 ```
@@ -424,7 +424,7 @@ Response Body `data` (200):
 
 **POST /updatePosting**
 
-Changes posting to contain values that are in the request body. Users can only update their own postings.
+Changes posting to contain values that are in the request body. Users can only update their own postings. Returns bad request if any applicant object contains an invalid id (i.e. the id field does not correspond to the UID of an existing user.)
 
 Request body (JSON):
 ```
