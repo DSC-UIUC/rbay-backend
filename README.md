@@ -1,28 +1,53 @@
-# Research Bay
+<p align="center">
+  <a href="https://github.com/DSC-UIUC/research-bay">
+    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  </a>
 
-// TODO about this project as a whole
+  <h3 align="center">:mag: Research Bay <strong>Backend</strong></h3>
+
+  <p align="center">
+    A web platform for efficiently connecting students to research opportunities and professors
+    <br />
+    <a href="https://research-bay.web.app"><strong><< Live Website >></strong></a>
+    <br />
+    <br />
+    Repository Links
+    <br />
+    <a href="https://github.com/DSC-UIUC/research-bay">Main</a>
+    ·
+    <a href="https://github.com/DSC-UIUC/rbay-frontend">Frontend</a>
+    ·
+    <a href="https://github.com/DSC-UIUC/rbay-backend">Backend</a>
+    ·
+    <a href="https://github.com/DSC-UIUC/rbay-data-ml">Data/ML</a>
+  </p>
+</p>
+
+## Table of Contents
+
+* [About Backend](#about-backend)
+  * [DSC at UIUC](#dsc-at-uiuc)
+* [Getting Started](#getting-started)
+* [Documentation](#documentation)
+  * [Core Features](#core-features)
 
 ## About Backend
 
-This repository contains the code and documentation for Research Bay's Backend API, which handles all HTTP endpoints required to successfully run all user authentication, data, and actions for the Research Bay website (Frontend). This API was built on REST and Serverless principles and can function independently from any frontend interface. Thus, future expansions, such as a mobile app or additional GCP resources, may easily be integrated into this project. This REST API is implemented using Firebase's Authentication, Firestore, Storage, and Cloud Functions services in JavaScript (Node.js).
+This repository contains the code and documentation for Research Bay's Backend, which handles all HTTP API endpoints required to successfully run all user authentication, data, and actions for the Research Bay platform. This API was built on REST and Serverless principles and can function independently from any frontend interface.
 
-### Backend Team
+More information about Research Bay as an entire project is available at the [main repository](https://github.com/DSC-UIUC/research-bay).
 
-The Research Bay project was built by student developers in Developer Student Club at the University of Illinois at Urbana-Champaign (DSC @ UIUC). DSC @ UIUC is an official branch of Google Developers' global Developer Student Club program. Specifically, this backend API was built by the following students in the DSC's 2019-2020 membership:
+### DSC at UIUC
 
-// TODO add links to developers' websites and/or email?
+The Research Bay project is built and maintained by student developers in Developer Student Club at the University of Illinois at Urbana-Champaign (DSC at UIUC) during the 2019-2020 school year. DSC at UIUC is an official branch of Google Developers' global [Developer Student Club program](https://developers.google.com/community/dsc).
 
-- [Keon Park](https://www.linkedin.com/in/parkkeo1/) - Lead Dev
-- [Thomas Yang](https://www.linkedin.com/in/tyang1780/) - Dev
-- Steven Pan - Dev
-- [Aditya Sriram](https://www.linkedin.com/in/sriramaditya/) - Dev
-- Kavi Ravuri - Mentor
+## Getting Started
 
----
+Please refer to the Research Bay general setup guide [here](https://github.com/DSC-UIUC/research-bay/blob/master/README.md#getting-started).
 
-### Documentation
+## Documentation
 
-The rest of this README contains the documentation for all current API endpoints supported by Research Bay. These notes assume the reader already has existing development experience with REST/HTTP APIs. Feel free to contact Keon Park at keonp2@illinois.edu with any questions or concerns.
+The rest of this README contains the documentation for all current API endpoints supported by Research Bay. These notes assume the reader already has existing development experience with REST/HTTP APIs. Feel free to contact the Research Bay team at dscuiuc2@gmail.com with any questions or concerns.
 
 Please read the documentation in full before invoking any endpoints for development, testing, or use.
 
@@ -44,10 +69,6 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 - [/getUserPostings](#getuserpostings)
 - [/selectApplicantForPosting](#selectapplicantforposting)
 - [/getUserRecommendations](#getuserrecommendations)
-
-// TODO add more
-
----
 
 ### Success and Error API responses
 
