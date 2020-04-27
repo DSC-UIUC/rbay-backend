@@ -79,7 +79,7 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 [Search & Recommendations](#searchandrecommendations)
 - [/getUserRecommendations](#getuserrecommendations)
 - [/getSearchPostings](#getsearchpostings)
-- [/getSearchProfiles[(#getsearchprofiles)
+- [/getSearchProfiles](#getsearchprofiles)
 
 [Misc](#misc)
 - [/getConfig](#getconfig)
