@@ -687,4 +687,18 @@ Response Body `data` (200):
 <a name="getconfig" id="getconfig"></a>
 **GET /getConfig**
 
-// TODO
+Used by the React.js frontend web app to load in configuration data from the backend's `rbay_config.json` in the Cloud Storage's default bucket.
+
+Request:
+```
+/getConfig
+```
+
+Response Body `data` (200):
+
+```
+"data" : {
+        "majors": [string array], // ["ACES Undeclared", "Accountancy", "Acting", ...]
+        "years": [string array], // [..., "Junior", "Senior", "Graduate"]
+    }
+```
