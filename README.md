@@ -29,7 +29,6 @@
   * [DSC at UIUC](#dsc-at-uiuc)
 * [Getting Started](#getting-started)
 * [Documentation](#documentation)
-  * [Core Features](#core-features)
 
 ## About Backend
 
