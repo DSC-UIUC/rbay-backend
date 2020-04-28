@@ -466,7 +466,7 @@ Response Body `data` (200):
 
 **POST /updatePosting**
 
-Changes posting to contain values that are in the request body. Users can only update their own postings. Returns bad request if any applicant object contains an invalid id (i.e. the id field does not correspond to the UID of an existing user.)
+Changes posting to contain values that are in the request body. Users can only update their own postings. Returns bad request if any applicant object contains an invalid id (i.e. the id field does not correspond to the UID of an existing user) or if request doesn't attempt to update any fields.
 
 Request body (JSON):
 ```
@@ -498,7 +498,7 @@ Applicant objects follow this format:
 }
 ```
 
-All fields except for `requirements` are required.
+`idToken`, `postingId`, and at least one of the other fields shown above are required.
 
 Response Body `data` (200):
 ```
