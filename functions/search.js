@@ -48,7 +48,7 @@ function getSearchPostings(searchQuery) {
 
     return searchindex.search(searchQuery);
 
-    
+
 
 }
 
@@ -67,11 +67,11 @@ exports.getSearch = functions.https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
-  
+
     if (req.method !== "GET") {
       return utils.handleBadRequest(res, "Must be a GET request.");
     }
-  
+
     if (!req.query.hasOwnProperty("idToken")) {
       return utils.handleBadRequest(res, "Missing idToken.");
     }
@@ -96,24 +96,24 @@ exports.getSearch = functions.https.onRequest(async (req, res) => {
 
             for(const obj of hits) {
 
-                var profileresult = {id : obj.objectID, name : obj.data.name, 
-                    year : obj.data.year, major : obj.data.major, about_me : obj.data.about_me};
+                var profileresult = {id : obj.objectID, name : obj.data.name,
+                    year : obj.data.year, major : obj.data.major, about_me : obj.data.about_me, picture: obj.data.picture};
 
                 profiles_results.push(profileresult);
 
             }
 
             getSearchPostings(searchQuery).then(({hits}) => {
-        
+
                 for(const obj of hits) {
-                    var postingsresult = {id : obj.objectID, description : obj.data.description, description : obj.data.description, 
-                        is_open : obj.data.is_open, lab_name : obj.data.lab_name, professor : obj.data.professor, 
-                        requirements : obj.data.requirements, title : obj.data.title, tags : obj.data.tags};
-    
+                    var postingsresult = {id : obj.objectID, description : obj.data.description, description : obj.data.description,
+                        is_open : obj.data.is_open, lab_name : obj.data.lab_name, professor : obj.data.professor,
+                        requirements : obj.data.requirements, title : obj.data.title, tags : obj.data.tags, picture: obj.data.picture};
+
                     postings_results.push(postingsresult);
-    
+
                 }
-    
+
                 var search_results = {postings: postings_results, profiles: profiles_results};
                 return utils.handleSuccess(res, search_results);
             });
