@@ -33,5 +33,4 @@ exports.getConfig = config.getConfig;
 exports.updatePostingAlgolia = search.updatePostingAlgolia;
 exports.updateProfilesAlgolia = search.updateProfilesAlgolia;
 
-exports.getSearchPostings = search.getSearchPostings;
-exports.getSearchProfiles = search.getSearchProfiles;
+exports.getSearch = search.getSearch;
