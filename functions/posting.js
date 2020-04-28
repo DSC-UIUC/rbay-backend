@@ -37,23 +37,21 @@ async function validateDataTypes(body, checkApplicants) {
         }
     }
 
-    // Tags validation.
-    if (!Array.isArray(body[CONSTS.TAGS])) {
-        return false;
-    }
-
-    for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
-        if (typeof body[CONSTS.TAGS][i] !== 'string') {
+    if (CONSTS.TAGS in body) {
+        // Tags validation.
+        if (!Array.isArray(body[CONSTS.TAGS])) {
             return false;
         }
-    }
 
+        for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
+            if (typeof body[CONSTS.TAGS][i] !== 'string') {
+                return false;
+            }
+        }
+    }
+    
     // Applicant field check.
-    if (checkApplicants) {
-        if (!(CONSTS.APPLICANTS in body)) {
-            return false;
-        }
-
+    if (checkApplicants && CONSTS.APPLICANTS in body) {
         let applicantList = body[CONSTS.APPLICANTS];
         for (let i = 0; i < applicantList.length; i++) {
             let application = applicantList[i];
@@ -75,11 +73,11 @@ async function validateDataTypes(body, checkApplicants) {
     }
 
     // Remaining field check.
-    return typeof body[CONSTS.DESCRIPTION] === 'string' &&
-        typeof body[CONSTS.LAB_NAME] === 'string' &&
-        typeof body[CONSTS.TITLE] === 'string' &&
+    return (!(CONSTS.DESCRIPTION in body) || typeof body[CONSTS.DESCRIPTION] === 'string') &&
+        (!(CONSTS.LAB_NAME in body) || typeof body[CONSTS.LAB_NAME] === 'string') &&
+        (!(CONSTS.TITLE in body) || typeof body[CONSTS.TITLE] === 'string') &&
         (!(CONSTS.IS_OPEN in body) || typeof body[CONSTS.IS_OPEN] === 'boolean') &&
-        typeof body[CONSTS.PROFESSOR_NAME] === 'string';
+        (!(CONSTS.PROFESSOR_NAME in body) || typeof body[CONSTS.PROFESSOR_NAME] === 'string');
 }
 
 const getUserPostingsWithRef = async (postingsRefArray) => {
@@ -214,18 +212,6 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!req.body.hasOwnProperty(CONSTS.DESCRIPTION) ||
-        !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
-        !req.body.hasOwnProperty(CONSTS.TITLE) ||
-        !req.body.hasOwnProperty(CONSTS.TAGS) ||
-        !req.body.hasOwnProperty(CONSTS.IS_OPEN) ||
-        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME) ||
-        !req.body.hasOwnProperty(CONSTS.APPLICANTS)) {
-        utils.handleBadRequest(res, "Missing title, lab name, description, tags, professor name, " + 
-            "applicant list, or status of posting.");
-        return;
-    }
-
     let idToken = req.body.idToken;
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
@@ -259,26 +245,21 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    // Constructing posting document.
-    let postingJson = {
-        [CONSTS.TITLE]: req.body[CONSTS.TITLE],
-        [CONSTS.LAB_NAME]: req.body[CONSTS.LAB_NAME],
-        [CONSTS.PROFESSOR]: userDocRef,
-        [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
-        [CONSTS.TAGS]: req.body[CONSTS.TAGS],
-        [CONSTS.IS_OPEN]: req.body[CONSTS.IS_OPEN],
-        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
-        [CONSTS.APPLICANTS]: req.body[CONSTS.APPLICANTS]
-    }
-
-    let requirements = {};
-    if (req.body.hasOwnProperty(CONSTS.REQUIREMENTS)) {
-        requirements = req.body[CONSTS.REQUIREMENTS];
+    // Create object with fields that need to be updated.
+    let fields = [CONSTS.TITLE, CONSTS.LAB_NAME, CONSTS.DESCRIPTION, CONSTS.TAGS, CONSTS.IS_OPEN, CONSTS.PROFESSOR_NAME, CONSTS.APPLICANTS, CONSTS.REQUIREMENTS];
+    let updateJson = {};
+    for (let i = 0; i < fields.length; i++) {
+        if (fields[i] in req.body) {
+            updateJson[fields[i]] = req.body[fields[i]];
+        }
     }
 
     // Updating posting document.
-    postingJson[CONSTS.REQUIREMENTS] = requirements;
-    postingDocRef.set(postingJson);
+    if (Object.keys(updateJson).length === 0) {
+        utils.handleBadRequest(res, "At least one field must be updated.");
+        return;
+    }
+    postingDocRef.update(updateJson);
     utils.handleSuccess(res, { "id": postingDocRef.id })
     return;
 });
