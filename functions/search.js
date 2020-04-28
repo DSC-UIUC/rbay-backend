@@ -97,7 +97,7 @@ exports.getSearch = functions.https.onRequest(async (req, res) => {
             for(const obj of hits) {
 
                 var profileresult = {id : obj.objectID, name : obj.data.name,
-                    year : obj.data.year, major : obj.data.major, about_me : obj.data.about_me, picture: obj.data.picture};
+                    year : obj.data.year, major : obj.data.major, about_me : obj.data.about_me, picture: obj.data.picture, department: obj.data.department };
 
                 profiles_results.push(profileresult);
 
