@@ -1,32 +1,57 @@
-# Research Bay
+<br />
+<p align="center">
+  <a href="https://github.com/DSC-UIUC/research-bay">
+    <img src="https://github.com/DSC-UIUC/research-bay/blob/master/images/rbay_logo_long.png?raw=true" alt="Logo">
+  </a>
 
-// TODO about this project as a whole
+  <h3 align="center">:mag_right: Research Bay <strong>Backend</strong></h3>
+
+  <p align="center">
+    A web platform for efficiently connecting students to research opportunities and professors
+    <br />
+    <a href="https://research-bay.web.app"><strong><< Live Website >></strong></a>
+    <br />
+    <br />
+    Repository Links
+    <br />
+    <a href="https://github.com/DSC-UIUC/research-bay">Main</a>
+    ·
+    <a href="https://github.com/DSC-UIUC/rbay-frontend">Frontend</a>
+    ·
+    <a href="https://github.com/DSC-UIUC/rbay-backend">Backend</a>
+    ·
+    <a href="https://github.com/DSC-UIUC/rbay-data-ml">Data/ML</a>
+  </p>
+</p>
+
+## Table of Contents
+
+* [About Backend](#about-backend)
+  * [DSC at UIUC](#dsc-at-uiuc)
+* [Getting Started](#getting-started)
+* [Documentation](#documentation)
 
 ## About Backend
 
-This repository contains the code and documentation for Research Bay's Backend API, which handles all HTTP endpoints required to successfully run all user authentication, data, and actions for the Research Bay website (Frontend). This API was built on REST and Serverless principles and can function independently from any frontend interface. Thus, future expansions, such as a mobile app or additional GCP resources, may easily be integrated into this project. This REST API is implemented using Firebase's Authentication, Firestore, Storage, and Cloud Functions services in JavaScript (Node.js).
+This repository contains the code and documentation for Research Bay's Backend, which handles all HTTP API endpoints required to successfully run all user authentication, data, and actions for the Research Bay platform. This API was built on REST and Serverless principles and can function independently from any frontend interface.
 
-### Backend Team
+More information about Research Bay as an entire project is available at the [main repository](https://github.com/DSC-UIUC/research-bay).
 
-The Research Bay project was built by student developers in Developer Student Club at the University of Illinois at Urbana-Champaign (DSC @ UIUC). DSC @ UIUC is an official branch of Google Developers' global Developer Student Club program. Specifically, this backend API was built by the following students in the DSC's 2019-2020 membership:
+### DSC at UIUC
 
-// TODO add links to developers' websites and/or email?
+The Research Bay project is built and maintained by student developers in Developer Student Club at the University of Illinois at Urbana-Champaign (DSC at UIUC) during the 2019-2020 school year. DSC at UIUC is an official branch of Google Developers' global [Developer Student Club program](https://developers.google.com/community/dsc).
 
-- [Keon Park](https://www.linkedin.com/in/parkkeo1/) - Lead Dev
-- Thomas Yang - Dev
-- Steven Pan - Dev
-- Aditya Sriram - Dev
-- Kavi Ravuri - Mentor
+## Getting Started
 
----
+Please refer to the Research Bay general setup guide [here](https://github.com/DSC-UIUC/research-bay/blob/master/README.md#getting-started).
 
-### Documentation
+## Documentation
 
-The rest of this README contains the documentation for all current API endpoints supported by Research Bay. These notes assume the reader already has existing development experience with REST/HTTP APIs. Feel free to contact Keon Park at keonp2@illinois.edu with any questions or concerns.
+The rest of this README contains the documentation for all current API endpoints supported by Research Bay. These notes assume the reader already has existing development experience with REST/HTTP APIs. Feel free to contact the Research Bay team at dscuiuc2@gmail.com with any questions or concerns.
 
 Please read the documentation in full before invoking any endpoints for development, testing, or use.
 
-All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions.net. Note that the endpoints use HTTPS to protect sensitive user information. Current endpoints are listed below:
+All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions.net. Note that the endpoints use HTTPS to protect sensitive user information. Current endpoints are listed below. Cloud functions that use DB or other event triggers are not included in this list.
 
 [Authentication](#auth)
 - [/signUp](#signup)
@@ -39,11 +64,11 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 - [/getProfile](#getprofile)
 - [/getProfileById](#getprofilebyid)
 - [/setProfile](#setprofile)
+- [/getProfileFileSignedUrl](#getprofilefilesignedurl)
 
 [Posting](#posting)
 - [/getUserPostings](#getuserpostings)
 - [/getPostingById](#getPostingById)
-- [/getUserRecommendations](#getuserrecommendations)
 - [/createPosting](#createPosting)
 - [/applyToPosting](#applyToPosting)
 - [/updatePosting](#updatePosting)
@@ -51,10 +76,14 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 - [/closePosting (depreciated)](#closePosting)
 - [/deletePosting](#deletePosting)
 
+[Search & Recommendations](#searchandrecommendations)
+- [/getUserRecommendations](#getuserrecommendations)
+- [/getSearchPostings](#getsearchpostings)
+- [/getSearchProfiles](#getsearchprofiles)
 
-// TODO add more
+[Misc](#misc)
+- [/getConfig](#getconfig)
 
----
 
 ### Success and Error API responses
 
@@ -109,7 +138,9 @@ Response Body `data` (200):
 "data": {
   "idToken" : [string],
   "username" : [string],
-  "is_student": [boolean]
+  "is_student": [boolean],
+  "expirationTimestamp": [int],
+  "email" : [string]
 }
 ```
 
@@ -136,7 +167,9 @@ Response Body `data` (200):
 "data": {
   "idToken" : [string],
   "username" : [string],
-  "is_student": [boolean]
+  "is_student": [boolean],
+  "expirationTimestamp": [int],
+  "email" : [string]
 }
 ```
 
@@ -177,6 +210,13 @@ Request Body (JSON):
 }
 ```
 
+All fields are required.
+
+Response Body `data` (200):
+```
+"data": "Password updated."
+```
+
 <a name="deleteuser" id="deleteuser"></a>
 **DELETE /deleteUser**
 
@@ -185,6 +225,13 @@ Deletes the current user using their valid `idToken`. If `idToken` is invalid or
 Request Query (URL encoded parameters):
 ```
 /deleteProfile?idToken=[string]
+```
+
+`idToken` is required.
+
+Response Body `data` (200):
+```
+"data": {}
 ```
 
 ---
@@ -220,6 +267,7 @@ For student user:
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "website" : [string],
   "experience": [
     {
       "title": [string],
@@ -235,6 +283,7 @@ For professor user:
 ```
 "data": {
   "about_me" : [string],
+  "website" : [string],
   "name": [string],
   "picture": [string],
   "coursework": [string array],
@@ -267,6 +316,7 @@ For student user:
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "website" : [string],
   "picture": [string],
   "experience": [
     {
@@ -283,6 +333,7 @@ For professor user:
 ```
 "data": {
   "about_me" : [string],
+  "website" : [string],
   "name": [string],
   "picture": [string],
   "coursework": [string array],
@@ -295,7 +346,7 @@ For professor user:
 
 Updates the current user's profile with the given profile data using their valid `idToken`. If `idToken` is invalid or expired, this call fails. The parameters that will be updated depend on whether the user is a student or a professor. On sucess, this endpoint will return the updated profile in the same format as [/getProfile](#getprofile) endpoint.
 
-Each profile parameter will be optional in the request body. Year will be an integer 1-5, meaning Freshmen-Graduate. Major will be array of strings in case of multiple majors
+Each profile parameter will be optional in the request body. Year will be an integer 1-5, meaning Freshmen-Graduate. Major will be array of strings in case of multiple majors.
 
 Request Body (JSON):
 ```
@@ -304,6 +355,11 @@ Request Body (JSON):
   profileFields...
 }
 ```
+
+`idToken` is required.
+
+Response Body `data` (200):
+
 For student user:
 ```
   "about_me" : [string],
@@ -314,6 +370,7 @@ For student user:
   "research_interests": [string array],
   "coursework": [string array],
   "skills": [string array],
+  "website" : [string],
   "picture": [string],
   "experience": [
     {
@@ -328,12 +385,36 @@ For student user:
 For professor user:
 ```
   "about_me" : [string],
+  "website" : [string],
   "name": [string],
   "coursework": [string array],
   "picture": [string],
   "research_interests": [string array]
 ```
 
+<a name="getprofilefilesignedurl" id="getprofilefilesignedurl"></a>
+**POST /getProfileFileSignedUrl**
+
+Generates and returns a signed URL that can be used to store a user's file with `name` (i.e. a profile picture or resume) to a location in Firebase Cloud Storage, depending on the file's `type`. 
+
+After receiving the signed URL, the client must send a PUT request to this URL with the file `Blob` or `File` object as the data to actually upload the file to Cloud Storage.
+
+Request Body (JSON):
+```
+{
+  "idToken" : [string],
+  "type": [string], // can be "resume" or "picture"
+  "contentType": [string], // ex. application/pdf, image/*, etc
+  "name": [string], 
+}
+```
+
+All fields are required.
+
+Response Body `data` (200):
+```
+"data": [string array] // data[0] contains the signed URL
+```
 
 ---
 
@@ -345,7 +426,7 @@ For professor user:
 <a name="getuserpostings" id="getuserpostings"></a>
 **GET /getUserPostings**
 
-Retrieves all the postings that a current user has created or applied to using their valid `idToken`. If `idToken` is invalid or expired, this call fails.
+Retrieves all the postings that a current user has created or applied to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. If the current user is a professor, they will receive information about the applicants. If the user is a student, they will not receive any information about the applicants.
 
 Request Query (URL encoded parameters):
 ```
@@ -365,10 +446,17 @@ Response Body `data` (200):
     "title"               : [string],
     "description"         : [string],
     "is_open"             : [boolean],
-    "applicants"          : [string array],
-    "selected_applicants" : [string array],
     "requirements"        : {...},
-    "tags"                : [string array]
+    "tags"                : [string array],
+    "applicants"          : [{
+          "is_selected" : [boolean],
+          "name"        : [string],
+          "year"        : [int],
+          "major"       : [string],
+          "id"          : [string]
+        },
+        {...}
+      ]
    },
    {...}
 ]
@@ -439,7 +527,6 @@ Response Body `data` (200):
 ```
 
 <a name="applyToPosting" id="applyToPosting"></a>
-
 **POST /applyToPosting**
 
 Adds student to list of applicants for a posting. Returns bad request if student has already applied to posting. Only students can apply to postings.
@@ -478,7 +565,6 @@ Request body (JSON):
   "lab_name": [string],
   "description": [string],
   "is_open" : [boolean],
-  "selected_applicants": [array of strings],
   "applicants" : [array of applicant objects],
   "requirements": {
     "gpa": [float],
@@ -518,8 +604,15 @@ Request Body (JSON):
 {
   "idToken" : [string],
   "postingId" : [string],
-  "applicant" : [string]
+  "applicant" : [string] // the applicant's uid
 }
+```
+
+All fields are required.
+
+Response Body `data` (200):
+```
+"data" : "Applicant successfully selected"
 ```
 
 <a name="closePosting" id="closePosting"></a>
@@ -560,5 +653,142 @@ Response Body `data` (200):
 ```
 "data" : {
         "Success": [string]
+    }
+```
+
+---
+
+<a name="searchandrecommendations" id="searchandrecommendations"></a>
+### Search & Recommendations
+
+<br />
+
+<a name="getuserrecommendations" id="getuserrecommendations"></a>
+**GET /getUserRecommendations**
+
+// TODO
+
+<a name="getsearchpostings" id="getsearchpostings"></a>
+**GET /getSearchPostings**
+
+Retrieves all the postings that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a student user can search for postings.
+
+Request Query (URL encoded parameters):
+```
+/getSearchPostings?idToken=[string]&searchQuery=[string]
+```
+
+`idToken` and `searchQuery` is required.
+
+Response Body `data` (200):
+
+```
+"data" : [
+   {
+    "data" : {
+    "lab_name"            : [string],
+    "professor"           : [string],
+    "professor_id"        : [string],
+    "title"               : [string],
+    "description"         : [string],
+    "is_open"             : [boolean],
+    "requirements"        : {...},
+    "tags"                : [string array],
+    "applicants"          : [{
+          "is_selected" : [boolean],
+          "name"        : [string],
+          "year"        : [int],
+          "major"       : [string],
+          "id"          : [string]
+        },
+        {...}
+      ]
+   },
+   "objectID": [string],
+   "_highlightResult": {
+     "data": {
+       {...}
+     }
+   },
+   {...}
+]
+
+```
+
+---
+
+<a name="getsearchprofiles" id="getsearchprofiles"></a>
+**GET /getSearchProfiles**
+
+Retrieves all the profiles that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a professor user can search for profiles.
+
+Request Query (URL encoded parameters):
+```
+/getSearchProfiles?idToken=[string]&searchQuery=[string]
+```
+
+`idToken` and `searchQuery` is required.
+
+Response Body `data` (200):
+
+```
+
+"data" : [
+   {
+    "data": {
+    "about_me" : [string],
+    "picture": [string],
+    "year" : [int],
+    "gpa": [float],
+    "major": [string],
+    "name": [string],
+    "research_interests": [string array],
+    "coursework": [string array],
+    "skills": [string array],
+    "website" : [string],
+    "experience": [
+      {
+        "title": [string],
+        "company": [string],
+        "description": [string]
+      },
+      {...}
+    ]
+    }
+   },
+   "objectID": [string],
+   "_highlightResult": {
+     "data": {
+       {...}
+     }
+   },
+   {...}
+]
+
+```
+
+---
+
+<a name="misc" id="misc"></a>
+### Misc
+
+<br />
+
+<a name="getconfig" id="getconfig"></a>
+**GET /getConfig**
+
+Used by the React.js frontend web app to load in configuration data from the backend's `rbay_config.json` in the Cloud Storage's default bucket.
+
+Request:
+```
+/getConfig
+```
+
+Response Body `data` (200):
+
+```
+"data" : {
+        "majors": [string array], // ["ACES Undeclared", "Accountancy", "Acting", ...]
+        "years": [string array], // [..., "Junior", "Senior", "Graduate"]
     }
 ```

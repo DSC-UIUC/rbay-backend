@@ -100,16 +100,24 @@ exports.setProfile = functions.https.onRequest(async (req, res) => {
   try {
     let userDocRef = fb.db.collection("users").doc(decodedUid);
     let userDoc = await userDocRef.get();
+    let userData = userDoc.data();
     if (!userDoc.exists) {
       return utils.handleServerError(res, "User does not exist.");
     }
 
-    let profileDocRef = userDoc.data().profile;
-    let verifiedData = utils.verifyFieldsProfile(userDoc.data().is_student, req.body);
+    let profileDocRef = userData.profile;
+    let verifiedData = utils.verifyFieldsProfile(userData[CONSTS.IS_STUDENT], req.body);
 
     await profileDocRef.set(verifiedData, { merge: true });
-    let profileDoc = await profileDocRef.get();
 
+    // changing name in posting data if prof
+    if (!userData[CONSTS.IS_STUDENT] && CONSTS.NAME in verifiedData) {
+      for (postRef of userData[CONSTS.POSTINGS]) {
+        await postRef.set({ [CONSTS.NAME] : verifiedData[CONSTS.NAME]}, {merge: true});
+      }
+    }
+
+    let profileDoc = await profileDocRef.get();
     let { user, ...rest } = profileDoc.data();
 
     return utils.handleSuccess(res, rest);

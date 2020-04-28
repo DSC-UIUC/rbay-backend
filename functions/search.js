@@ -41,16 +41,37 @@ exports.updateProfilesAlgolia = functions.firestore
         }
 });
 
-exports.getSearchPostings = functions.https.onRequest(async (req, res) => {
+function getSearchPostings(searchQuery) {
+
+    const client_search = algoliasearch(functions.config().algolia.appid, functions.config().algolia.searchkey);
+    searchindex = client_search.initIndex('postings');
+
+    return searchindex.search(searchQuery);
+
+
+
+}
+
+
+function getSearchProfiles(searchQuery) {
+
+    const client_search = algoliasearch(functions.config().algolia.appid, functions.config().algolia.searchkey);
+    searchindex = client_search.initIndex('profiles');
+
+    return searchindex.search(searchQuery);
+
+}
+
+exports.getSearch = functions.https.onRequest(async (req, res) => {
     // for manually handling POST/OPTIONS CORS policy
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', '*');
-  
+
     if (req.method !== "GET") {
       return utils.handleBadRequest(res, "Must be a GET request.");
     }
-  
+
     if (!req.query.hasOwnProperty("idToken")) {
       return utils.handleBadRequest(res, "Missing idToken.");
     }
@@ -68,62 +89,34 @@ exports.getSearchPostings = functions.https.onRequest(async (req, res) => {
     }
 
     try {
-        const client_search = algoliasearch(functions.config().algolia.appid, functions.config().algolia.searchkey);
-        searchindex = client_search.initIndex('postings');
-        //let hits = await searchindex.search(searchQuery);
 
-        //return utils.handleSuccess(res, {entries: hits});
+        let profiles_results = [];
+        let postings_results = [];
+        getSearchProfiles(searchQuery).then(({hits}) => {
 
-        searchindex.search(searchQuery).then(({ hits }) => {
-            console.log(hits);
-            return utils.handleSuccess(res, hits);
-        });
+            for(const obj of hits) {
 
-    } catch (err) {
-        return utils.handleServerError(res, err);
-    }
+                var profileresult = {id : obj.objectID, name : obj.data.name,
+                    year : obj.data.year, major : obj.data.major, about_me : obj.data.about_me, picture: obj.data.picture, department: obj.data.department };
 
-});
+                profiles_results.push(profileresult);
 
+            }
 
-exports.getSearchProfiles = functions.https.onRequest(async (req, res) => {
-    // for manually handling POST/OPTIONS CORS policy
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
-    res.set('Access-Control-Allow-Headers', '*');
-  
-    if (req.method !== "GET") {
-      return utils.handleBadRequest(res, "Must be a GET request.");
-    }
-  
-    if (!req.query.hasOwnProperty("idToken")) {
-      return utils.handleBadRequest(res, "Missing idToken.");
-    }
+            getSearchPostings(searchQuery).then(({hits}) => {
 
-    if (!req.query.hasOwnProperty("searchQuery")) {
-        return utils.handleBadRequest(res, "Missing searchQuery.");
-    }
+                for(const obj of hits) {
+                    var postingsresult = {id : obj.objectID, description : obj.data.description, description : obj.data.description,
+                        is_open : obj.data.is_open, lab_name : obj.data.lab_name, professor : obj.data.professor,
+                        requirements : obj.data.requirements, title : obj.data.title, tags : obj.data.tags, picture: obj.data.picture};
 
-    let idToken = req.query.idToken;
-    let searchQuery = req.query.searchQuery;
-    let decodedUid = await auth.verifyTokenWithAdmin(idToken);
-    console.log(decodedUid);
-    if (decodedUid == null) {
-      return utils.handleBadRequest(res, "Token is invalid or expired.");
-    }
+                    postings_results.push(postingsresult);
 
-    try {
-        const client_search = algoliasearch(functions.config().algolia.appid, functions.config().algolia.searchkey);
-        searchindex = client_search.initIndex('profiles');
+                }
 
-
-        //let hits = await searchindex.search(searchQuery);
-
-        //return utils.handleSuccess(res, {entries: hits});
-
-        searchindex.search(searchQuery).then(({ hits }) => {
-            console.log(hits);
-            return utils.handleSuccess(res, hits);
+                var search_results = {postings: postings_results, profiles: profiles_results};
+                return utils.handleSuccess(res, search_results);
+            });
         });
 
     } catch (err) {
