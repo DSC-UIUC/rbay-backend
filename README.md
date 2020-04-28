@@ -46,9 +46,9 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 - [/getUserRecommendations](#getuserrecommendations)
 - [/createPosting](#createPosting)
 - [/applyToPosting](#applyToPosting)
-- [/selectApplicantForPosting](#selectapplicantforposting)
 - [/updatePosting](#updatePosting)
-- [/closePosting](#closePosting)
+- [/selectApplicantForPosting (depreciated)](#selectapplicantforposting)
+- [/closePosting (depreciated)](#closePosting)
 - [/deletePosting](#deletePosting)
 
 
@@ -508,7 +508,7 @@ Response Body `data` (200):
 ```
 
 <a name="selectapplicantforposting" id="selectapplicantforposting"></a>
-**POST /selectApplicantForPosting**
+**POST /selectApplicantForPosting (depreciated)**
 
 Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting. This will move the applicant from the postings applicants field to selected_applicants field.
 
@@ -523,7 +523,7 @@ Request Body (JSON):
 ```
 
 <a name="closePosting" id="closePosting"></a>
-**POST /closePosting**
+**POST /closePosting (depreciated)**
 
 Sets the `is_open` field of the posting with the specified ID to false. Professors are only able to close their own postings.
 

@@ -494,9 +494,9 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
     return utils.handleBadRequest(res, "Must be a POST request.");
   }
 
-  if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("postingId"))) {
-    return utils.handleBadRequest(res, "Missing idToken or postingId.");
-  }
+    if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("postingId") && req.body.hasOwnProperty("applicant"))) {
+        return utils.handleBadRequest(res, "Missing idToken, postingId, or applicant UID.");
+    }
 
   let postingId = req.body.postingId;
   let idToken = req.body.idToken;
@@ -536,32 +536,26 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
         return;
     }
     let postingDocData = await postingDoc.data();
-    console.log(postingDocData);
     if (!postingDocData[CONSTS.IS_OPEN]) {
       utils.handleBadRequest(res, "Posting is already closed");
       return;
     }
 
+      let applicants = postingDocData[CONSTS.APPLICANTS];
+      for (let i = 0; i < applicants.length; i++) {
+          if (applicants[i][CONSTS.ID] === req.body.applicant && !applicants[i][CONSTS.IS_SELECTED]) {
+              applicants[i][CONSTS.IS_SELECTED] = true;
+              postingDocRef.update({ [CONSTS.APPLICANTS]: applicants });
+              utils.handleSuccess(res, req.body.applicant + " successfully selected");
+              return;
+          } else if (applicants[i][CONSTS.ID] === req.body.applicant && applicants[i][CONSTS.IS_SELECTED]) {
+              utils.handleBadRequest(res, "Given Applicant is already selected");
+              return;
+          }
+      }
 
-    // checking applicant is already selected
-    // getting applicant user ref
-    let applicant_id = req.body.applicant;
-    let appUserRef = fb.db.collection("users").doc(applicant_id);
-
-    if (postingDocData[CONSTS.SELECTED].find(app => app.id === applicant_id)) {
-        utils.handleBadRequest(res, "Given Applicant is already selected");
-        return;
-    }
-    // checking if applicant has already applied
-    if (postingDocData[CONSTS.APPLICANTS].find(app => app.id === applicant_id)) {
-        postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(appUserRef) });
-        postingDocRef.update({ [CONSTS.APPLICANTS]: FieldValue.arrayRemove(appUserRef) });
-        utils.handleSuccess(res, "Applicant successfully selected");
-        return;
-    } else {
-        utils.handleBadRequest(res, "Given Applicant did not apply for this posting");
-        return;
-    }
+      utils.handleBadRequest(res, "Given Applicant did not apply for this posting");
+      return;
   } catch(err) {
     utils.handleServerError(res, err);
   }
