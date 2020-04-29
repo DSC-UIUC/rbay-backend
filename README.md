@@ -721,15 +721,14 @@ Response Body `data` (200):
 
 ```
 
+<a name="getsearch" id="getsearch"></a>
+**GET /getSearch**
 
-<a name="getsearchpostings" id="getsearchpostings"></a>
-**GET /getSearchPostings**
-
-Retrieves all the postings that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a student user can search for postings.
+Retrieves all the postings and profiles that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. 
 
 Request Query (URL encoded parameters):
 ```
-/getSearchPostings?idToken=[string]&searchQuery=[string]
+/getSearch?idToken=[string]&searchQuery=[string]
 ```
 
 `idToken` and `searchQuery` is required.
@@ -737,88 +736,32 @@ Request Query (URL encoded parameters):
 Response Body `data` (200):
 
 ```
-"data" : [
-   {
-    "data" : {
-    "lab_name"            : [string],
-    "professor"           : [string],
-    "professor_id"        : [string],
-    "title"               : [string],
-    "description"         : [string],
-    "is_open"             : [boolean],
-    "requirements"        : {...},
-    "tags"                : [string array],
-    "applicants"          : [{
-          "is_selected" : [boolean],
-          "name"        : [string],
-          "year"        : [int],
-          "major"       : [string],
-          "id"          : [string]
-        },
-        {...}
-      ]
-   },
-   "objectID": [string],
-   "_highlightResult": {
-     "data": {
-       {...}
-     }
-   },
-   {...}
-]
-
-```
-
----
-
-<a name="getsearchprofiles" id="getsearchprofiles"></a>
-**GET /getSearchProfiles**
-
-Retrieves all the profiles that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a professor user can search for profiles.
-
-Request Query (URL encoded parameters):
-```
-/getSearchProfiles?idToken=[string]&searchQuery=[string]
-```
-
-`idToken` and `searchQuery` is required.
-
-Response Body `data` (200):
-
-```
-
-"data" : [
-   {
-    "data": {
-    "about_me" : [string],
-    "picture": [string],
-    "year" : [int],
-    "gpa": [float],
-    "major": [string],
-    "name": [string],
-    "research_interests": [string array],
-    "coursework": [string array],
-    "skills": [string array],
-    "website" : [string],
-    "experience": [
+"data" : {
+    "postings" : [
       {
-        "title": [string],
-        "company": [string],
-        "description": [string]
+        "id"            : [string],
+        "description"   : [string],
+        "is_open"       : [boolean],
+        "lab_name"      : [string],
+        "professor"     : [string],
+        "requirements"  : {...},
+        "title"         : [string],
+        "tags"          : [string array]
+      },
+      {...}
+    ],
+    "profiles" : [
+      {
+        "id"            : [string],
+        "name"          : [string],
+        "year"          : [int],
+        "major"         : [string],
+        "about_me"      : [string],
+        "picture"       : [string]
       },
       {...}
     ]
-    }
-   },
-   "objectID": [string],
-   "_highlightResult": {
-     "data": {
-       {...}
-     }
-   },
-   {...}
-]
-
+}
 ```
 
 ---
