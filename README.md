@@ -448,7 +448,8 @@ Response Body `data` (200):
     "is_open"             : [boolean],
     "requirements"        : {...},
     "tags"                : [string array],
-    "applicants"          : [{
+    "applicants"          : [
+        {
           "is_selected" : [boolean],
           "name"        : [string],
           "year"        : [int],
@@ -666,7 +667,60 @@ Response Body `data` (200):
 <a name="getuserrecommendations" id="getuserrecommendations"></a>
 **GET /getUserRecommendations**
 
-// TODO
+Retrieves all the recommended postings and profiles that has been generated using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Posting object will be in the same format as [/getUserPostings](#getuserpostings). Profile object will be in the same format as [/getProfile](#getprofile).
+
+Request Query (URL encoded parameters):
+```
+/getSearchPostings?idToken=[string]
+```
+
+`idToken` is required.
+
+Response Body `data` (200):
+
+```
+"data" : [
+  {
+    "data" : {
+      "posting_recommendations" : [
+          {
+            "lab_name"            : [string],
+            "professor"           : [string],
+            "professor_id"        : [string],
+            "title"               : [string],
+            "description"         : [string],
+            "is_open"             : [boolean],
+            "requirements"        : {...},
+            "tags"                : [string array]
+          },
+          {...}
+        ],
+      "profile_recommendations" : [  // fields will change depending on if profile is a teacher or student
+          {
+            "about_me" : [string],
+            "picture": [string],
+            "year" : [int],
+            "gpa": [float],
+            "major": [string],
+            "name": [string],
+            "research_interests": [string array],
+            "coursework": [string array],
+            "skills": [string array],
+            "website" : [string],
+            "experience": [
+              {
+                "title": [string],
+                "company": [string],
+                "description": [string]
+              }
+          },
+          {...}
+        ]
+  }
+]
+
+```
+
 
 <a name="getsearchpostings" id="getsearchpostings"></a>
 **GET /getSearchPostings**

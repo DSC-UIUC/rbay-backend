@@ -3,6 +3,7 @@ const profile = require('./profile.js');
 const posting = require('./posting.js');
 const config = require('./config.js');
 const search = require('./search.js');
+const recommendation = require('./recommendation.js');
 
 exports.changePassword = auth.changePassword;
 exports.deleteUser = auth.deleteUser;
@@ -18,7 +19,7 @@ exports.getProfileFileSignedUrl = profile.getProfileFileSignedUrl;
 exports.setProfileFile = profile.setProfileFile;
 
 exports.getUserPostings = posting.getUserPostings;
-exports.getUserRecommendations = posting.getUserRecommendations;
+exports.getUserRecommendations = recommendation.getUserRecommendations;
 
 exports.createPosting = posting.createPosting;
 exports.updatePosting = posting.updatePosting;
