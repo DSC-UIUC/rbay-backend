@@ -681,7 +681,7 @@ Response Body `data` (200):
 "data" : [
   {
     "data" : {
-      "posting" : [
+      "postings" : [
           {
             "lab_name"            : [string],
             "professor"           : [string],
@@ -694,7 +694,7 @@ Response Body `data` (200):
           },
           {...}
         ],
-      "profile" : [  // fields will change depending on if profile is a teacher or student
+      "profiles" : [  // fields will change depending on if profile is a teacher or student
           {
             "about_me" : [string],
             "picture": [string],
