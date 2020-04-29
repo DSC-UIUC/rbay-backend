@@ -107,7 +107,7 @@ exports.getSearch = functions.https.onRequest(async (req, res) => {
 
                 for(const obj of hits) {
                     var postingsresult = {id : obj.objectID, description : obj.data.description, description : obj.data.description,
-                        is_open : obj.data.is_open, lab_name : obj.data.lab_name, professor : obj.data.professor,
+                        is_open : obj.data.is_open, lab_name : obj.data.lab_name, professor_name : obj.data.professor,
                         requirements : obj.data.requirements, title : obj.data.title, tags : obj.data.tags, picture: obj.data.picture};
 
                     postings_results.push(postingsresult);
