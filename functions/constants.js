@@ -15,6 +15,7 @@ exports.WEBSITE = 'website';
 exports.UID = 'uid';
 exports.PROFREF = 'profile';
 exports.USERREF = 'user';
+exports.PROFILES = 'profiles';
 exports.POSTINGS = 'postings';
 exports.DEVELOPER_KEY = 'developerKey';
 

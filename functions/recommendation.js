@@ -54,7 +54,8 @@ exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
 	    data[CONSTS.ID] = profile_id;
 	    prof_results.push(data);
 	  }
-	  recData[CONSTS.REC_PROFILE] = prof_results;
+	  delete recData[CONSTS.REC_PROFILE];
+	  recData[CONSTS.PROFILES] = prof_results;
 
 	  // get posting data
 	  let post_results = [];
@@ -73,7 +74,8 @@ exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
 	    data[CONSTS.ID] = post_id;
 	    post_results.push(data);
 	  }
-	  recData[CONSTS.REC_POSTING] = post_results;
+	  delete recData[CONSTS.REC_POSTING];
+	  recData[CONSTS.POSTINGS] = post_results;
 
 	  return utils.handleSuccess(res, recData);
 	} catch (err) {
