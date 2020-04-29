@@ -71,15 +71,14 @@ All endpoints have a base URL of https://us-central1-research-bay.cloudfunctions
 - [/getPostingById](#getPostingById)
 - [/createPosting](#createPosting)
 - [/applyToPosting](#applyToPosting)
-- [/selectApplicantForPosting](#selectapplicantforposting)
 - [/updatePosting](#updatePosting)
-- [/closePosting](#closePosting)
+- [/selectApplicantForPosting (depreciated)](#selectapplicantforposting)
+- [/closePosting (depreciated)](#closePosting)
 - [/deletePosting](#deletePosting)
 
 [Search & Recommendations](#searchandrecommendations)
 - [/getUserRecommendations](#getuserrecommendations)
-- [/getSearchPostings](#getsearchpostings)
-- [/getSearchProfiles](#getsearchprofiles)
+- [/getSearch](#getsearch)
 
 [Misc](#misc)
 - [/getConfig](#getconfig)
@@ -448,7 +447,8 @@ Response Body `data` (200):
     "is_open"             : [boolean],
     "requirements"        : {...},
     "tags"                : [string array],
-    "applicants"          : [{
+    "applicants"          : [
+        {
           "is_selected" : [boolean],
           "name"        : [string],
           "year"        : [int],
@@ -549,33 +549,11 @@ Response Body `data` (200):
     }
 ```
 
-<a name="selectapplicantforposting" id="selectapplicantforposting"></a>
-**POST /selectApplicantForPosting**
-
-Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting.
-
-Request Body (JSON):
-
-```
-{
-  "idToken" : [string],
-  "postingId" : [string],
-  "applicant" : [string] // the applicant's uid
-}
-```
-
-All fields are required.
-
-Response Body `data` (200):
-```
-"data" : "Applicant successfully selected"
-```
-
 <a name="updatePosting" id="updatePosting"></a>
 
 **POST /updatePosting**
 
-Changes posting to contain values that are in the request body. Users can only update their own postings. Returns bad request if any applicant object contains an invalid id (i.e. the id field does not correspond to the UID of an existing user.)
+Changes posting to contain values that are in the request body. Users can only update their own postings. Returns bad request if any applicant object contains an invalid id (i.e. the id field does not correspond to the UID of an existing user) or if request doesn't attempt to update any fields.
 
 Request body (JSON):
 ```
@@ -606,7 +584,7 @@ Applicant objects follow this format:
 }
 ```
 
-All fields except for `requirements` are required.
+`idToken`, `postingId`, and at least one of the other fields shown above are required.
 
 Response Body `data` (200):
 ```
@@ -615,8 +593,30 @@ Response Body `data` (200):
 }
 ```
 
+<a name="selectapplicantforposting" id="selectapplicantforposting"></a>
+**POST /selectApplicantForPosting (depreciated)**
+
+Selects an applicant for the given posting created by the user with their valid `idToken`. If `idToken` is invalid or expired, this call fails. Given applicant must have applied for the posting and the posting must still be open. This endpoint will NOT close the posting. This will move the applicant from the postings applicants field to selected_applicants field.
+
+Request Body (JSON):
+
+```
+{
+  "idToken" : [string],
+  "postingId" : [string],
+  "applicant" : [string] // the applicant's uid
+}
+```
+
+All fields are required.
+
+Response Body `data` (200):
+```
+"data" : "Applicant successfully selected"
+```
+
 <a name="closePosting" id="closePosting"></a>
-**POST /closePosting**
+**POST /closePosting (depreciated)**
 
 Sets the `is_open` field of the posting with the specified ID to false. Professors are only able to close their own postings.
 
@@ -666,65 +666,68 @@ Response Body `data` (200):
 <a name="getuserrecommendations" id="getuserrecommendations"></a>
 **GET /getUserRecommendations**
 
-// TODO
-
-<a name="getsearchpostings" id="getsearchpostings"></a>
-**GET /getSearchPostings**
-
-Retrieves all the postings that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a student user can search for postings.
+Retrieves all the recommended postings and profiles that has been generated using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Posting object will be in the same format as [/getUserPostings](#getuserpostings). Profile object will be in the same format as [/getProfile](#getprofile).
 
 Request Query (URL encoded parameters):
 ```
-/getSearchPostings?idToken=[string]&searchQuery=[string]
+/getSearchPostings?idToken=[string]
 ```
 
-`idToken` and `searchQuery` is required.
+`idToken` is required.
 
 Response Body `data` (200):
 
 ```
 "data" : [
-   {
+  {
     "data" : {
-    "lab_name"            : [string],
-    "professor"           : [string],
-    "professor_id"        : [string],
-    "title"               : [string],
-    "description"         : [string],
-    "is_open"             : [boolean],
-    "requirements"        : {...},
-    "tags"                : [string array],
-    "applicants"          : [{
-          "is_selected" : [boolean],
-          "name"        : [string],
-          "year"        : [int],
-          "major"       : [string],
-          "id"          : [string]
-        },
-        {...}
-      ]
-   },
-   "objectID": [string],
-   "_highlightResult": {
-     "data": {
-       {...}
-     }
-   },
-   {...}
+      "posting" : [
+          {
+            "lab_name"            : [string],
+            "professor"           : [string],
+            "professor_id"        : [string],
+            "title"               : [string],
+            "description"         : [string],
+            "is_open"             : [boolean],
+            "requirements"        : {...},
+            "tags"                : [string array]
+          },
+          {...}
+        ],
+      "profile" : [  // fields will change depending on if profile is a teacher or student
+          {
+            "about_me" : [string],
+            "picture": [string],
+            "year" : [int],
+            "gpa": [float],
+            "major": [string],
+            "name": [string],
+            "research_interests": [string array],
+            "coursework": [string array],
+            "skills": [string array],
+            "website" : [string],
+            "experience": [
+              {
+                "title": [string],
+                "company": [string],
+                "description": [string]
+              }
+          },
+          {...}
+        ]
+  }
 ]
 
 ```
 
----
+<a name="getsearch" id="getsearch"></a>
+**GET /getSearch**
 
-<a name="getsearchprofiles" id="getsearchprofiles"></a>
-**GET /getSearchProfiles**
-
-Retrieves all the profiles that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. Only a professor user can search for profiles.
+Retrieves all the postings and profiles that a current user has searched to using their valid `idToken`. If `idToken` is invalid or expired, this call fails. 
 
 Request Query (URL encoded parameters):
 ```
-/getSearchProfiles?idToken=[string]&searchQuery=[string]
+/getSearch?idToken=[string]&searchQuery=[string]
 ```
 
 `idToken` and `searchQuery` is required.
@@ -732,39 +735,32 @@ Request Query (URL encoded parameters):
 Response Body `data` (200):
 
 ```
-
-"data" : [
-   {
-    "data": {
-    "about_me" : [string],
-    "picture": [string],
-    "year" : [int],
-    "gpa": [float],
-    "major": [string],
-    "name": [string],
-    "research_interests": [string array],
-    "coursework": [string array],
-    "skills": [string array],
-    "website" : [string],
-    "experience": [
+"data" : {
+    "postings" : [
       {
-        "title": [string],
-        "company": [string],
-        "description": [string]
+        "id"            : [string],
+        "description"   : [string],
+        "is_open"       : [boolean],
+        "lab_name"      : [string],
+        "professor"     : [string],
+        "requirements"  : {...},
+        "title"         : [string],
+        "tags"          : [string array]
+      },
+      {...}
+    ],
+    "profiles" : [
+      {
+        "id"            : [string],
+        "name"          : [string],
+        "year"          : [int],
+        "major"         : [string],
+        "about_me"      : [string],
+        "picture"       : [string]
       },
       {...}
     ]
-    }
-   },
-   "objectID": [string],
-   "_highlightResult": {
-     "data": {
-       {...}
-     }
-   },
-   {...}
-]
-
+}
 ```
 
 ---

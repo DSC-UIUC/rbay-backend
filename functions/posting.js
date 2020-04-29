@@ -37,23 +37,21 @@ async function validateDataTypes(body, checkApplicants) {
         }
     }
 
-    // Tags validation.
-    if (!Array.isArray(body[CONSTS.TAGS])) {
-        return false;
-    }
-
-    for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
-        if (typeof body[CONSTS.TAGS][i] !== 'string') {
+    if (CONSTS.TAGS in body) {
+        // Tags validation.
+        if (!Array.isArray(body[CONSTS.TAGS])) {
             return false;
         }
-    }
 
+        for (let i = 0; i < body[CONSTS.TAGS].length; i++) {
+            if (typeof body[CONSTS.TAGS][i] !== 'string') {
+                return false;
+            }
+        }
+    }
+    
     // Applicant field check.
-    if (checkApplicants) {
-        if (!(CONSTS.APPLICANTS in body)) {
-            return false;
-        }
-
+    if (checkApplicants && CONSTS.APPLICANTS in body) {
         let applicantList = body[CONSTS.APPLICANTS];
         for (let i = 0; i < applicantList.length; i++) {
             let application = applicantList[i];
@@ -75,11 +73,11 @@ async function validateDataTypes(body, checkApplicants) {
     }
 
     // Remaining field check.
-    return typeof body[CONSTS.DESCRIPTION] === 'string' &&
-        typeof body[CONSTS.LAB_NAME] === 'string' &&
-        typeof body[CONSTS.TITLE] === 'string' &&
+    return (!(CONSTS.DESCRIPTION in body) || typeof body[CONSTS.DESCRIPTION] === 'string') &&
+        (!(CONSTS.LAB_NAME in body) || typeof body[CONSTS.LAB_NAME] === 'string') &&
+        (!(CONSTS.TITLE in body) || typeof body[CONSTS.TITLE] === 'string') &&
         (!(CONSTS.IS_OPEN in body) || typeof body[CONSTS.IS_OPEN] === 'boolean') &&
-        typeof body[CONSTS.PROFESSOR_NAME] === 'string';
+        (!(CONSTS.PROFESSOR_NAME in body) || typeof body[CONSTS.PROFESSOR_NAME] === 'string');
 }
 
 const getUserPostingsWithRef = async (postingsRefArray, is_student) => {
@@ -216,18 +214,6 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    if (!req.body.hasOwnProperty(CONSTS.DESCRIPTION) ||
-        !req.body.hasOwnProperty(CONSTS.LAB_NAME) ||
-        !req.body.hasOwnProperty(CONSTS.TITLE) ||
-        !req.body.hasOwnProperty(CONSTS.TAGS) ||
-        !req.body.hasOwnProperty(CONSTS.IS_OPEN) ||
-        !req.body.hasOwnProperty(CONSTS.PROFESSOR_NAME) ||
-        !req.body.hasOwnProperty(CONSTS.APPLICANTS)) {
-        utils.handleBadRequest(res, "Missing title, lab name, description, tags, professor name, " + 
-            "applicant list, or status of posting.");
-        return;
-    }
-
     let idToken = req.body.idToken;
     let decodedUid = await auth.verifyTokenWithAdmin(idToken);
     console.log(decodedUid);
@@ -261,26 +247,21 @@ exports.updatePosting = functions.https.onRequest(async (req, res) => {
         return;
     }
 
-    // Constructing posting document.
-    let postingJson = {
-        [CONSTS.TITLE]: req.body[CONSTS.TITLE],
-        [CONSTS.LAB_NAME]: req.body[CONSTS.LAB_NAME],
-        [CONSTS.PROFESSOR]: userDocRef,
-        [CONSTS.DESCRIPTION]: req.body[CONSTS.DESCRIPTION],
-        [CONSTS.TAGS]: req.body[CONSTS.TAGS],
-        [CONSTS.IS_OPEN]: req.body[CONSTS.IS_OPEN],
-        [CONSTS.PROFESSOR_NAME]: req.body[CONSTS.PROFESSOR_NAME],
-        [CONSTS.APPLICANTS]: req.body[CONSTS.APPLICANTS]
-    }
-
-    let requirements = {};
-    if (req.body.hasOwnProperty(CONSTS.REQUIREMENTS)) {
-        requirements = req.body[CONSTS.REQUIREMENTS];
+    // Create object with fields that need to be updated.
+    let fields = [CONSTS.TITLE, CONSTS.LAB_NAME, CONSTS.DESCRIPTION, CONSTS.TAGS, CONSTS.IS_OPEN, CONSTS.PROFESSOR_NAME, CONSTS.APPLICANTS, CONSTS.REQUIREMENTS];
+    let updateJson = {};
+    for (let i = 0; i < fields.length; i++) {
+        if (fields[i] in req.body) {
+            updateJson[fields[i]] = req.body[fields[i]];
+        }
     }
 
     // Updating posting document.
-    postingJson[CONSTS.REQUIREMENTS] = requirements;
-    postingDocRef.set(postingJson);
+    if (Object.keys(updateJson).length === 0) {
+        utils.handleBadRequest(res, "At least one field must be updated.");
+        return;
+    }
+    postingDocRef.update(updateJson);
     utils.handleSuccess(res, { "id": postingDocRef.id })
     return;
 });
@@ -515,9 +496,9 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
     return utils.handleBadRequest(res, "Must be a POST request.");
   }
 
-  if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("postingId"))) {
-    return utils.handleBadRequest(res, "Missing idToken or postingId.");
-  }
+    if (!(req.body.hasOwnProperty("idToken") && req.body.hasOwnProperty("postingId") && req.body.hasOwnProperty("applicant"))) {
+        return utils.handleBadRequest(res, "Missing idToken, postingId, or applicant UID.");
+    }
 
   let postingId = req.body.postingId;
   let idToken = req.body.idToken;
@@ -557,62 +538,29 @@ exports.selectApplicantForPosting = functions.https.onRequest(async (req, res) =
         return;
     }
     let postingDocData = await postingDoc.data();
-    console.log(postingDocData);
     if (!postingDocData[CONSTS.IS_OPEN]) {
       utils.handleBadRequest(res, "Posting is already closed");
       return;
     }
 
+      let applicants = postingDocData[CONSTS.APPLICANTS];
+      for (let i = 0; i < applicants.length; i++) {
+          if (applicants[i][CONSTS.ID] === req.body.applicant && !applicants[i][CONSTS.IS_SELECTED]) {
+              applicants[i][CONSTS.IS_SELECTED] = true;
+              postingDocRef.update({ [CONSTS.APPLICANTS]: applicants });
+              utils.handleSuccess(res, req.body.applicant + " successfully selected");
+              return;
+          } else if (applicants[i][CONSTS.ID] === req.body.applicant && applicants[i][CONSTS.IS_SELECTED]) {
+              utils.handleBadRequest(res, "Given Applicant is already selected");
+              return;
+          }
+      }
 
-    // checking applicant is already selected
-    // getting applicant user ref
-    let applicant_id = req.body.applicant;
-    let appUserRef = fb.db.collection("users").doc(applicant_id);
-
-    if (postingDocData[CONSTS.SELECTED].find(app => app.id === applicant_id)) {
-        utils.handleBadRequest(res, "Given Applicant is already selected");
-        return;
-    }
-    // checking if applicant has already applied
-    if (postingDocData[CONSTS.APPLICANTS].find(app => app.id === applicant_id)) {
-        postingDocRef.update({ [CONSTS.SELECTED]: FieldValue.arrayUnion(appUserRef) });
-        postingDocRef.update({ [CONSTS.APPLICANTS]: FieldValue.arrayRemove(appUserRef) });
-        utils.handleSuccess(res, "Applicant successfully selected");
-        return;
-    } else {
-        utils.handleBadRequest(res, "Given Applicant did not apply for this posting");
-        return;
-    }
+      utils.handleBadRequest(res, "Given Applicant did not apply for this posting");
+      return;
   } catch(err) {
     utils.handleServerError(res, err);
   }
-});
-
-
-
-exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
-  // for manually handling POST/OPTIONS CORS policy
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', '*');
-
-  if (req.method !== "GET") {
-    return utils.handleBadRequest(res, "Must be a GET request.");
-  }
-
-  if (!req.query.hasOwnProperty("idToken")) {
-    return utils.handleBadRequest(res, "Missing idToken.");
-  }
-
-  let idToken = req.query.idToken;
-  let decodedUid = await auth.verifyTokenWithAdmin(idToken);
-  console.log(decodedUid);
-  if (decodedUid == null) {
-    return utils.handleBadRequest(res, "Token is invalid or expired.");
-  }
-
-  // TODO
-  return utils.handleSuccess(res, []);
 });
 
 exports.closePosting = functions.https.onRequest(async (req, res) => {

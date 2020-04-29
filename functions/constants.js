@@ -15,6 +15,7 @@ exports.WEBSITE = 'website';
 exports.UID = 'uid';
 exports.PROFREF = 'profile';
 exports.USERREF = 'user';
+exports.PROFILES = 'profiles';
 exports.POSTINGS = 'postings';
 exports.DEVELOPER_KEY = 'developerKey';
 
@@ -37,3 +38,5 @@ exports.PROFESSOR_ID = 'professor_id';
 exports.IS_SELECTED = 'is_selected';
 
 exports.CONFIG = 'rbay_config.json';
+
+exports.REC = 'recommendations';
