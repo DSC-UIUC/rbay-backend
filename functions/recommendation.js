@@ -39,7 +39,7 @@ exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
   // get profile data
   try {
 	  let prof_results = [];
-	  for (profile_id of recData[CONSTS.REC_PROFILE]) {
+	  for (profile_id of recData[CONSTS.PROFILES]) {
 	  	let profRef = fb.db.collection("profiles").doc(profile_id);
 	  	let profDoc = await profRef.get();
 
@@ -54,12 +54,11 @@ exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
 	    data[CONSTS.ID] = profile_id;
 	    prof_results.push(data);
 	  }
-	  delete recData[CONSTS.REC_PROFILE];
 	  recData[CONSTS.PROFILES] = prof_results;
 
 	  // get posting data
 	  let post_results = [];
-	  for (post_id of recData[CONSTS.REC_POSTING]) {
+	  for (post_id of recData[CONSTS.POSTINGS]) {
 	  	let postRef = fb.db.collection(CONSTS.POSTINGS).doc(post_id);
 	  	let postDoc = await postRef.get();
 
@@ -74,7 +73,6 @@ exports.getUserRecommendations = functions.https.onRequest(async (req, res) => {
 	    data[CONSTS.ID] = post_id;
 	    post_results.push(data);
 	  }
-	  delete recData[CONSTS.REC_POSTING];
 	  recData[CONSTS.POSTINGS] = post_results;
 
 	  return utils.handleSuccess(res, recData);

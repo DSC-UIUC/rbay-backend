@@ -40,5 +40,3 @@ exports.IS_SELECTED = 'is_selected';
 exports.CONFIG = 'rbay_config.json';
 
 exports.REC = 'recommendations';
-exports.REC_POSTING = "posting_recommendations";
-exports.REC_PROFILE = "profile_recommendations";
